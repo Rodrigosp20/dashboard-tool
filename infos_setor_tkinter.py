@@ -83,7 +83,7 @@ nomes_substituir = {"Vendas e serviços prestados" : "Volume de Negócios",
  "EBITDA em percentagem do volume de negócios ":"Margem Operacional",
  "Margem líquida em percentagem dos rendimentos" : "Margem líquida",
  "Rendibilidade do ativo": "Rentabilidade do ativo",
- "Rendibilidade dos capitais próprios": "Rentabilidade do Capital Próprio"} #avisar que estas novas substituições foram realizdas
+ "Rendibilidade dos capitais próprios": "Rentabilidade do Capital Próprio"}
    
 
          
