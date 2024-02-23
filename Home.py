@@ -1,32 +1,18 @@
-import time
-import numpy as np
-import pandas as pd
-import plotly.express as px  # pip install plotly
-import plotly.graph_objects as go
-import streamlit as st  # pip install streamlit
-import math
+import numpy as np # pip install numpy
+import pandas as pd # pip install pandas
+import streamlit as st # pip install streamlit
 
-# pip install openpyxl
 
-# python -m streamlit run teste.py
-
+# Configuração da página 
 st.set_page_config(
     page_title="Dashboard",
     page_icon="🏡",
     layout="wide",
 )
 
-hide_img_fs = '''
-        <style>
-        button[title="View fullscreen"]{
-            visibility: hidden;}
-        </style>
-        '''
-
-st.markdown(hide_img_fs, unsafe_allow_html=True)
 
 
-##############################DEMONSTRAÇÃO E RESULTADOS###############################
+##############################CÁLCULOS PARA A TABELA DEMONSTRAÇÃO E RESULTADOS###############################
 
 def EBITDA_calc(col): 
     return round(st.session_state.df_demo_resultados.loc[0:4,col].sum()+st.session_state.df_demo_resultados.loc[13:14,col].sum()-(st.session_state.df_demo_resultados.loc[5:12,col].sum()+st.session_state.df_demo_resultados.loc[16,col].sum()),2)
@@ -60,7 +46,7 @@ def calc_demo_resultados_df():
         st.session_state.df_demo_resultados.at[31,year] = vab_calc(year)
     return st.session_state.df_demo_resultados
     
-##############################BALANÇO###############################
+##############################CÁLCULOS PARA A TABELA BALANÇO###############################
 def ativo_nao_corrent_calc(col):
     return round(st.session_state.df_balanco.loc[1:11,col].sum() ,2)
     
@@ -96,7 +82,8 @@ def calc_balanco_df():
         st.session_state.df_balanco.at[61,year] = total_passivo(year)
         st.session_state.df_balanco.at[62,year] = total_capital_proprio_mais_passivo(year)
     return st.session_state.df_balanco
-##############################INDICADORES############################
+
+##############################CÁLCULOS PARA A TABELA INDICADORES############################
 def margem_operacional(col):
     return (st.session_state.df_demo_resultados.loc[18,col] / st.session_state.df_demo_resultados.loc[0,col])
 
@@ -166,6 +153,27 @@ def rentabilidade_capital_investido(col):
 def rentabilidade_capital_proprio(col):
     return st.session_state.df_demo_resultados.loc[26,col]/st.session_state.df_balanco.loc[41,col]
     
+    
+# Criação da tabela indicadores
+def create_indicadores_df():
+    df_indicadores = pd.DataFrame()
+    df_indicadores['Indicador'] = ['Rendibilidade do negócio','Margem Operacional','Margem Bruta','Margem Líquida','Nível de Valor Acrescentado',
+    'Rentabilidade do Ativo','Operacionais','Turnover do Ativo','% Rh no Volume de Negócios','% FSE no Volume de Negócios','% CMVMC / Volume de negócios',
+    '% Custos no Volume de Negócios','Prazo Médio de Pagamentos','Prazo Médio de Recebimentos','Valor gerado por RH','Taxa de Exportação',
+    'Liquidez','Liquidez Geral','Liquidez Reduzida','Liquidez imediata','Financeiros','Autonomia Financeira','Endividamento','Solvabilidade',
+    'Alavancagem Financeira','Retorno','Rentabilidade do Capital Investido','Rentabilidade do Capital Próprio']
+    
+    df_indicadores['Fórmula de Cálculo'] = [None,'EBITDA/Volume de Negócios','(Volume de Negócios-CMVMC)/Volume de Negócios','Resultados Líquidos / Volume de Negóciosa','VAB/VBP',
+    'Resultados Líquidos / Ativo',None,'Volume de negócios/ Ativo','Gastos com pessoal / Volume de Negócios','FSE / Voluma de Negócios','CMVMC / Volume de Negócios',
+    '(CMVMC + FSE + Gastos com Pessoal) / Volume de Negócios','(Fornecedores / (Compras x (1+Tx IVA)) x 365','Clientes / ((Vendas x (1+tx . IVA)) x 365','VAB/N.º de Recursos Humanos','Volume de negócios Internacioal / Volume de Negócios',
+    None,'Ativo Corrente / Passivo Corrente','(Ativo corrente - Inventários) / Passivo Corrente','Caixa e Depósitos Bancários / Passivo Corrente',None,'Capital Próprio/Ativo','Passivo/Ativo','Ativo/Passivo',
+    'Financiamento Obtido / (CP+Financiamentos Obtidos)',None,'(Ebit - Imposto) / Ativo','Resultado Líquido / Capital Próprio']
+    
+    for year in st.session_state.df_demo_resultados.columns[1:]:
+        
+        df_indicadores[int(year)] = 0    
+    return df_indicadores
+
 def calc_indicadores_df():
     for year in st.session_state.df_indicadores.columns[2:]:
         st.session_state.df_indicadores.at[1,year] = margem_operacional(year)
@@ -194,7 +202,8 @@ def calc_indicadores_df():
         st.session_state.df_indicadores.at[27,year] = rentabilidade_capital_proprio(year)
     return st.session_state.df_indicadores
     
-##############################DADOS DO SETOR#########################
+##############################CRIAÇÃO DA TABELA DADOS DO SETOR#########################
+# Criação da estrututa da DF para as tabelas ANUAIS (todas as dimensões e dimensão aplicável)
 def create_dados_setor_df():
     df_dados_setor = pd.DataFrame()
     df_dados_setor['Rúbricas'] = ['Volume de Negócios', 'EBITDA', 'CMVMC','Gastos com Pessoal','FSE', 'Resultados Líquidos', 'Ativo', 'Passivo',
@@ -208,6 +217,7 @@ def create_dados_setor_df():
     
     return df_dados_setor
 
+# Criação da estrututa da DF para as tabelas de QUARTIS (todas as dimensões e dimensão aplicável)
 def create_quartis_df():
     df_quartis = pd.DataFrame()
     df_quartis['Indicadores'] = ['Liquidez geral','Liquidez geral','Liquidez geral',
@@ -225,7 +235,7 @@ def create_quartis_df():
     return df_quartis
     
     
-##############################COMPARAÇÃO############################
+##############################CRIAÇÃO DA TABELA DE COMPARAÇÃO############################
 
 def create_comparacao_df():
     st.session_state.df_comparacao = pd.DataFrame()
@@ -310,18 +320,20 @@ def fill_comparacao_df():
         for row in rows_empresa:
             
             st.session_state.df_comparacao.at[row, year] = st.session_state.df_indicadores[st.session_state.df_indicadores['Indicador'] == st.session_state.df_comparacao.at[row, 'Indicador']][year].iloc[0]
-            st.session_state.df_comparacao.at[row+2,year] = st.session_state.df_comparacao.at[row,year] / st.session_state.df_comparacao.at[row+1,year] * 100
+            st.session_state.df_comparacao.at[row+2, year] = st.session_state.df_comparacao.at[row,year] / st.session_state.df_comparacao.at[row+1,year] * 100
             
         
     return st.session_state.df_comparacao
  
 
+
 def normalizar_info_setor(file_path):
     infos_setor = pd.read_excel(file_path, sheet_name = "Portugal", header = 9, usecols="D:K")
 
     nome_setor = pd.read_excel(file_path, sheet_name = "Portugal", header = 1).iloc[0,3]
-    dimensao = pd.read_excel(file_path, sheet_name = "Portugal", header = 1).iloc[2,3]
 
+    st.session_state.dimensao = pd.read_excel(file_path, sheet_name = "Portugal", header = 1).iloc[2,3].split(' ')[3]
+    
     #parse da coluna total
     infos_setor["Total"] = infos_setor["Total"].astype("str")
     infos_setor["Total"] = infos_setor["Total"].str.replace(" ", "")
@@ -386,12 +398,9 @@ def normalizar_info_setor(file_path):
 
     
     #gera o título da tabela, com o nome do setor
-    pivot_ordered.index.names = [nome_setor[29:].strip() + "; " + dimensao[20:].strip()]
+    pivot_ordered.index.names = [nome_setor[29:].strip() + "; " + st.session_state.dimensao[20:].strip()]
     
     return pivot_ordered
-
-
-
 
 
 
@@ -399,25 +408,27 @@ def normalizar_info_setor(file_path):
 ##############################MAIN############################
 
 st.markdown("### Demonstração Resultados, Balanço & Indicadores")
-uploaded_file = st.file_uploader("Selecionar ficheiro Indicadores Macros")
-uploaded_file = "C:\\Users\\Bruno\\OneDrive\\Ambiente de Trabalho\\STREAM\\dashboard-tool\\Indicadores_macros_backup_2606 .xlsb.xlsm"
-if uploaded_file is not None:
+uploaded_file = st.file_uploader("Selecionar ficheiro Indicadores Macros") # File uploader para o excel com as tabelas "Demonstração de Resultados" e "Balanço" preenchidas
+
+if uploaded_file is not None: 
+    # Quando for feito o upload do ficheiro são criadas as dataframes
 
     st.session_state.df_demo_resultados = pd.read_excel(uploaded_file, sheet_name="Demonstração de Resultados", skiprows=3)
-    st.session_state.df_demo_resultados = st.session_state.df_demo_resultados.iloc[:,1:]
+    st.session_state.df_demo_resultados = st.session_state.df_demo_resultados.iloc[:,1:] # todas as colunas menos a primeira, que no caso é vazia
     
     st.session_state.df_balanco = pd.read_excel(uploaded_file, sheet_name="Balanço", skiprows=3)
-    st.session_state.df_balanco = st.session_state.df_balanco.iloc[:,1:]
+    st.session_state.df_balanco = st.session_state.df_balanco.iloc[:,1:] # todas as colunas menos a primeira, que no caso é vazia
     
-    st.session_state.df_indicadores = pd.read_excel(uploaded_file, sheet_name="Indicadores", skiprows=2)
+    st.session_state.df_indicadores = create_indicadores_df() # cria a estrutura da dataframe indicadores
      
-    st.session_state.df_demo_resultados = calc_demo_resultados_df()
+    st.session_state.df_demo_resultados = calc_demo_resultados_df() # recalcula os valores
     
-    st.session_state.df_balanco = calc_balanco_df() 
+    st.session_state.df_balanco = calc_balanco_df() # recalcula os valores
     
-    st.session_state.df_indicadores = calc_indicadores_df()
+    st.session_state.df_indicadores = calc_indicadores_df() # preenche a datafrme indicadores com os valores das 2 tabelas acima
      
 
+    # apresentação das dataframes
     with st.expander("Indicadores"):
         st.write(st.session_state.df_indicadores)
     
@@ -431,91 +442,122 @@ if uploaded_file is not None:
 
 st.markdown("### Dados do Setor")        
 st.markdown("##### Todas as Dimensões")   
-uploaded_file_todas_dimen = st.file_uploader("Selecionar ficheiro <Todas as dimensões>")
-
-uploaded_file_todas_dimen = "C:\\Users\\Bruno\\OneDrive\\Ambiente de Trabalho\\STREAM\\dashboard-tool\\RelatorioQS.xls"
+uploaded_file_todas_dimen = st.file_uploader("Selecionar ficheiro <Todas as dimensões>") # File uploader para o excel com as tabelas com o quadro de setor para todas as dimensões
 
 if uploaded_file_todas_dimen is not None:
+    # Quando for feito o upload do ficheiro é criada a dataframe para todas as dimensões utilizando a função do Rafael
+
     st.session_state.df_todas_dimen = normalizar_info_setor(uploaded_file_todas_dimen)
+    # apresentação da dataframe
     with st.expander("Todas as Dimensões"):
         st.write(st.session_state.df_todas_dimen)
         
 
 st.markdown("##### Dimensão Aplicável")
-uploaded_file_varias_dimen = st.file_uploader("Selecionar ficheiro <Micro, Pequena, Média ou Grande dimensões>")  
+uploaded_file_aplicavel_dimen = st.file_uploader("Selecionar ficheiro <Micro, Pequena, Média ou Grande dimensões>") # File uploader para o excel com as tabelas com o quadro de setor para a dimensão aplicável
 
-uploaded_file_varias_dimen = "C:\\Users\\Bruno\\OneDrive\\Ambiente de Trabalho\\STREAM\\dashboard-tool\\RelatorioQS_micro.xls"
+if uploaded_file_aplicavel_dimen is not None:
+    # Quando for feito o upload do ficheiro é criada a dataframe para a dimensão aplicável utilizando a função do Rafael
 
-if uploaded_file_varias_dimen is not None:
-    st.session_state.df_dimen_aplicavel = normalizar_info_setor(uploaded_file_varias_dimen)
+    st.session_state.df_dimen_aplicavel = normalizar_info_setor(uploaded_file_aplicavel_dimen)
+    # apresentação da dataframe
     with st.expander("Dimensão Aplicável"):
         st.write(st.session_state.df_dimen_aplicavel)
     
     
-if uploaded_file_todas_dimen and uploaded_file_varias_dimen is not None:
-    st.markdown("##### Dados") # mudar para outro nome ou então mudar o capitulo de cima
-    st.session_state.df_dados_setor_todas = create_dados_setor_df()
+if uploaded_file_todas_dimen and uploaded_file_aplicavel_dimen is not None:
+    # Se ambas as dataframes, todas as dimensões e dimensão aplicável, forem criadas então é feita a criação de mais 4 dataframes:
+    # (I) dataframe anual para todas as dimensões, (II) dataframe anual para dimensão aplicável, (III) dataframe em quartis para todas as dimensões 
+    # e (IV) dataframe em quartis para a dimensão aplicável
     
-    for year in st.session_state.df_dados_setor_todas.columns[1:]:
-    
-        my_range = [x for x in range(len(st.session_state.df_dados_setor_todas)) if x not in [17, 23]]
+    st.markdown("##### Dados") 
 
+    # Criação da (I) dataframe anual para todas as dimensões
+    st.session_state.df_dados_setor_todas = create_dados_setor_df() # criação da estrutura
+    
+    # percorre todos os anos
+    for year in st.session_state.df_dados_setor_todas.columns[1:]: 
+    
+        # criação de uma range com todas os numeros das rows menos as rows 17 e 23 (Taxa da VAB na CAE e Taxa de Exportação)
+        my_range = [x for x in range(len(st.session_state.df_dados_setor_todas)) if x not in [17, 23]] 
         
-
+        # percorre todas as rows menos a 17 e 23, que seram preenchidas à parte
         for row in my_range: 
+            # preenche de acordo com a dataframe que o utilizador inseriu para todas as dimensões
+            # vai buscar o valor médio dos campos com o mesmo nome
             st.session_state.df_dados_setor_todas.at[row,year] = st.session_state.df_todas_dimen.loc[st.session_state.df_dados_setor_todas.loc[row,'Rúbricas'], str(year)+' Valor Médio']
         
-        st.session_state.df_dados_setor_todas.at[17,year] = 123 #perguntar Taxa de VAB na CAE
+        st.session_state.df_dados_setor_todas.at[17,year] = "X" # não era precisa, então acabou por não se preencher a Taxa de VAB na CAE
+        
+        # cálculo da Taxa de Exportação
         st.session_state.df_dados_setor_todas.at[23,year] = st.session_state.df_todas_dimen.loc['Vendas e serviços prestados no mercado externo',str(year)+' Total'] / st.session_state.df_todas_dimen.loc['Volume de Negócios',str(year)+' Total']
         
+
     with st.expander("Dados do Setor - Todas as dimensões"):
         st.write(st.session_state.df_dados_setor_todas)
         
     
-    
-    st.session_state.df_dados_setor_aplicavel = create_dados_setor_df()
+    # Criação da (II) dataframe anual para a dimensão aplicável
+    st.session_state.df_dados_setor_aplicavel = create_dados_setor_df() # criação da estrutura
+
+    # percorre todos os anos
     for year in st.session_state.df_dados_setor_aplicavel.columns[1:]:
-    
+
+        # criação de uma range com todas os numeros das rows menos as rows 17, 24 e 23 (Taxa da VAB na CAE, Taxa de Exportação e VAB em percentagem da produção)
         my_range = [x for x in range(len(st.session_state.df_dados_setor_aplicavel)) if x not in [17, 23,24]]
 
         for row in my_range: 
+            # preenche de acordo com a dataframe que o utilizador inseriu para a dimensão aplicável
+            # vai buscar o valor médio dos campos com o mesmo nome
             st.session_state.df_dados_setor_aplicavel.at[row,year] = st.session_state.df_dimen_aplicavel.loc[st.session_state.df_dados_setor_aplicavel.loc[row,'Rúbricas'], str(year)+' Valor Médio']
         
-        st.session_state.df_dados_setor_aplicavel.at[17,year] = 123 #perguntar Taxa de VAB na CAE
+        st.session_state.df_dados_setor_aplicavel.at[17,year] = "X"
         st.session_state.df_dados_setor_aplicavel.at[23,year] = st.session_state.df_dimen_aplicavel.loc['Vendas e serviços prestados no mercado externo',str(year)+' Total'] / st.session_state.df_dimen_aplicavel.loc['Volume de Negócios',str(year)+' Total']
         st.session_state.df_dados_setor_aplicavel.at[24,year] = st.session_state.df_dimen_aplicavel.loc['VAB em percentagem da produção',str(year)+' Valor Médio'] / 100
+    
     with st.expander("Dados do Setor - Dimensão aplicável"):
         st.write(st.session_state.df_dados_setor_aplicavel)
         
         
-
-    st.session_state.df_quartis_todas = create_quartis_df()
+    # Criação da (III) dataframe em quartis para todas as dimensões
+    st.session_state.df_quartis_todas = create_quartis_df() # criação da estrutura
     
     for year in st.session_state.df_quartis_todas.columns[2:]:
-        for row in range(0,len(st.session_state.df_quartis_todas)): 
+       
+        for row in range(0,len(st.session_state.df_quartis_todas)): # percorre desde a primeira row até à última
+                # preenche cada row de acordo com a dataframe que o utilizador inseriu para todas as dimensões
+                # vai buscar o valor do quartil dos campos com o mesmo nome
                 st.session_state.df_quartis_todas.at[row,year] = st.session_state.df_todas_dimen.loc[st.session_state.df_quartis_todas.loc[row,'Indicadores'], str(year)+' '+st.session_state.df_quartis_todas.loc[row,'Quartil']] / 100
     
     with st.expander("Dados do Setor - Quartis - Todas as dimensões"):
         st.write(st.session_state.df_quartis_todas)
         
               
-    st.session_state.df_quartis_varias = create_quartis_df()  
+    # Criação da (IV) dataframe em quartis para a dimensão aplicável
+    st.session_state.df_quartis_varias = create_quartis_df() # criação da estrutura
     
     for year in st.session_state.df_quartis_varias.columns[2:]:
-        for row in range(0,len(st.session_state.df_quartis_varias)): 
+
+        for row in range(0,len(st.session_state.df_quartis_varias)): # percorre desde a primeira row até à última
+                # preenche cada row de acordo com a dataframe que o utilizador inseriu para a dimensão aplicavel
+                # vai buscar o valor do quartil dos campos com o mesmo nome
                 st.session_state.df_quartis_varias.at[row,year] = st.session_state.df_dimen_aplicavel.loc[st.session_state.df_quartis_varias.loc[row,'Indicadores'], str(year)+' '+st.session_state.df_quartis_varias.loc[row,'Quartil']] / 100
     
     with st.expander("Dados do Setor - Quartis - Dimensão aplicável"):
         st.write(st.session_state.df_quartis_varias)
         
         
-if uploaded_file_todas_dimen and uploaded_file_varias_dimen and uploaded_file is not None:        
+if uploaded_file_todas_dimen and uploaded_file_aplicavel_dimen and uploaded_file is not None:     
+    # Se todos os ficheiros tiverem sido uploaded então vai criar a dataframe comparação
+       
     st.markdown('### Comparação')    
-    st.session_state.df_comparacao = create_comparacao_df()
+    st.session_state.df_comparacao = create_comparacao_df() #  criação da estrutura
     
-    fill_comparacao_df()
+    fill_comparacao_df() # preenchimento da dataframe
     
     with st.expander("Comparação"):
         st.data_editor(st.session_state.df_comparacao)
+        
+
         
                 

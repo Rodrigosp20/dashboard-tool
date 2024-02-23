@@ -1,47 +1,31 @@
-import time
-import numpy as np
-import pandas as pd  
-import plotly.express as px  # pip install plotly
-import plotly.graph_objects as go
-import streamlit as st  # pip install streamlit
-import streamlit.components.v1 as components
-import math
+import numpy as np # pip install numpy
+import plotly.express as px # pip install plotly
+import plotly.graph_objects as go # pip install plotly
+import streamlit as st # pip install streamlit
 import statistics
+import Print as Print # ficheiro Print.py
 
+
+# Configuração da página
 st.set_page_config(
-    page_title="Dashboard Rentabilidade",
+    page_title="Dashboard por Indicador",
     page_icon="📈",
     layout="wide",
 )
 
+if 'df_todas_dimen' and 'df_dados_setor_todas' and 'df_comparacao' in st.session_state:
 
-if 'df_comparacao' and 'df_demo_resultados' and 'df_balanco' and 'df_indicadores' in st.session_state: # melhorar este if
-    
-    option = st.sidebar.selectbox('Escolher Indicador',('Margem Bruta', 'Margem Operacional', 'Margem Líquida',
-    'Rentabilidade do Ativo', 'Nível de Valor Acrescentado','Liquidez Geral','Liquidez Reduzida','Liquidez imediata','Autonomia Financeira','Endividamento','Solvabilidade',
-    'Alavancagem Financeira','Rentabilidade do Capital Investido','Rentabilidade do Capital Próprio','Turnover do Ativo','% Rh no Volume de Negócios',
-    '% FSE no Volume de Negócios','% CMVMC / Volume de negócios','% Custos no Volume de Negócios','Prazo Médio de Pagamentos','Prazo Médio de Recebimentos'))
-    
-    option_comparacao_varias = {'Margem Bruta': 'Margem bruta',
-    'Margem Operacional':'Margem Operacional',
-    'Margem Líquida':'Margem líquida',
-    'Rentabilidade do Ativo':'Rentabilidade do ativo',
-    'Liquidez Geral':'Liquidez geral',
-    'Liquidez Reduzida':'Liquidez reduzida',
-    'Autonomia Financeira':'Autonomia financeira',
-    'Rentabilidade do Capital Próprio':'Rentabilidade do Capital Próprio',
-    'Prazo Médio de Pagamentos':'Prazo médio de pagamentos',
-    'Prazo Médio de Recebimentos':'Prazo médio de recebimentos',
-    }
-    
+    ##############################DASHBOARD POR INDICADOR############################
 
-    st.markdown("## Dashboard Rentabilidade - "+option.title())
+    col1_logo, col2_text = st.columns([1,3]) # coluna do logo e do texto.
     
-    col1_logo, col2_text = st.columns(2)
-    
-    col1_mid, col2_mid = st.columns([1, 3])
-    col1_bot, col2_bot = st.columns([2, 1],gap="large")
-    
+    col1_mid, col2_mid = st.columns([1,3]) # coluna do medidor e do gráfico de linhas.
+
+    col1_bot, col2_bot = st.columns([2,1]) # coluna do gráfico de barras e do texto.
+
+    config = {'displaylogo': False} # configuração para desabilitar o logo do plotly em cada gráfico
+
+    # CSS
     st.markdown("""
     <style>
     .title-font {
@@ -60,71 +44,191 @@ if 'df_comparacao' and 'df_demo_resultados' and 'df_balanco' and 'df_indicadores
         font-size:11px !important;
         text-align: center;
     }
+                
+    div[data-testid="stHorizontalBlock"]:nth-child(-n+3):not(:first-child) div[data-testid="column"]  {
+        background-color: rgb(243, 243, 243);
+        border-radius: 25px;
+        padding: 10px 20px 0 20px;
+        
+    }
+                
+    div[data-testid="stHorizontalBlock"]:nth-child(2) div[data-testid="column"]:first-child div[data-testid="stVerticalBlockBorderWrapper"]:first-child div[data-testid="element-container"]:nth-child(4) {
+        padding: 30px 0 0 0;
+        
+    }
+    
+    .st-style-button {
+        display: inline-flex;
+        -webkit-box-align: center;
+        align-items: center;
+        -webkit-box-pack: center;
+        justify-content: center;
+        font-weight: 400;
+        padding: 0.25rem 0.75rem;
+        border-radius: 0.5rem;
+        min-height: 38.4px;
+        margin: 0px;
+        line-height: 1.6;
+        color: inherit;
+        width: auto;
+        user-select: none;
+        background-color: white; /* Set a white background */
+        border: 1px solid rgba(49, 51, 63, 0.2);
+        outline: none; !important
+        box-shadow: none !important;
+    }
+
+    .st-style-button:hover {
+        background-color: white;
+        color: #0A04D2;
+        border: 1px solid #0A04D2;
+    }
+    div[data-testid='stSidebarNav'] ul{
+        max-height:none;
+    }
+    button[title="View fullscreen"]{
+        visibility: hidden;
+    }
+    hr{
+        margin: 0px;
+    }
+
     </style>
     """, unsafe_allow_html=True)
-    
-    hide_img_fs = '''
-        <style>
-        button[title="View fullscreen"]{
-            visibility: hidden;}
-        </style>
-        '''
-    allow_scroll = """
-            <style>
-                .stApp{ position: relative !important;}
-                .appview-container{ position: relative !important;}
-            </style>
-            """
-            
-    st.markdown(allow_scroll, unsafe_allow_html=True)
 
-    st.markdown(hide_img_fs, unsafe_allow_html=True)
+    # função que será chamada cada vez que o indicador selecionado muda
+    # utilizada para corrigir bug do streamlit
+    def option_callback():
+        st.session_state.option = st.session_state.new_option
+
+    options_array= ['Margem Bruta', 'Margem Operacional', 'Margem Líquida',
+    'Rentabilidade do Ativo', 'Nível de Valor Acrescentado','Liquidez Geral','Liquidez Reduzida','Liquidez imediata','Autonomia Financeira','Endividamento','Solvabilidade',
+    'Alavancagem Financeira','Rentabilidade do Capital Investido','Rentabilidade do Capital Próprio','Turnover do Ativo','% Rh no Volume de Negócios',
+    '% FSE no Volume de Negócios','% CMVMC / Volume de negócios','% Custos no Volume de Negócios','Prazo Médio de Pagamentos','Prazo Médio de Recebimentos']
     
-    def fraco():
-        st.image('low.png',use_column_width = True)
-        st.markdown('<p class="sub_header-font">Fraco</p>', unsafe_allow_html=True)
+    # inicia o indicador a Margem Bruta
+    if "option" not in st.session_state:
+        st.session_state.option = 'Margem Bruta'
+
+    # selectbox com os indicadores    
+    st.session_state.option = st.sidebar.selectbox('Escolher Indicador',('Margem Bruta', 'Margem Operacional', 'Margem Líquida',
+    'Rentabilidade do Ativo', 'Nível de Valor Acrescentado','Liquidez Geral','Liquidez Reduzida','Liquidez imediata','Autonomia Financeira','Endividamento','Solvabilidade',
+    'Alavancagem Financeira','Rentabilidade do Capital Investido','Rentabilidade do Capital Próprio','Turnover do Ativo','% Rh no Volume de Negócios',
+    '% FSE no Volume de Negócios','% CMVMC / Volume de negócios','% Custos no Volume de Negócios','Prazo Médio de Pagamentos','Prazo Médio de Recebimentos'),index=options_array.index(st.session_state.option), key = 'new_option',on_change = option_callback)
+
+    # caixa de texto para mudar o título. Por omissão é "Rentabilidade do negócio"
+    titulo_principal = st.sidebar.text_input("Titulo principal","Rentabilidade do negócio")
+
+    st.sidebar.markdown("***") # Cria uma linha na sidebar
     
-    def mod_fraco():
-        st.image('mod_low.png',use_column_width = True)
-        st.markdown('<p class="sub_header-font">Moderadamente Fraco</p>', unsafe_allow_html=True)
+    years_graph_gauge = st.session_state.df_comparacao.columns[3:] # todos os anos presentes na dataframe Comparação
     
-    def mod_forte():
-        st.image('mod_high.png',use_column_width = True)
-        st.markdown('<p class="sub_header-font">Moderadamente Forte</p>', unsafe_allow_html=True)    
+    # range slider para o medidor (gauge) que vai desde o primeiro até o último ano que aparece na lista years_graph_gauge 
+    year_slider_gauge = st.sidebar.slider(
+        "Anos gráfico medidor:",
+        min_value=int(min(years_graph_gauge)),
+        max_value=int(max(years_graph_gauge)),
+        value=(int(min(years_graph_gauge)), int(max(years_graph_gauge))),
+        step=1
+    )
+
+    # caixa de texto para mudar o título do medidor
+    titulo_gauge = st.sidebar.text_input("Titulo medidor","Desempenho agregado entre "+str(year_slider_gauge[0])+" e "+str(year_slider_gauge[1]))
+
+    st.sidebar.markdown("***")
+
+    # caixa de texto para mudar o título do gráfico de linhas
+    titulo_linhas = st.sidebar.text_input("Titulo gráfico linhas","Diferença entre o desempenho da empresa e a média do setor")
     
-    def forte():
-        st.image('high.png',use_column_width = True)
-        st.markdown('<p class="sub_header-font">Forte</p>', unsafe_allow_html=True)
-        
-    def medias_per_year():
+    #color picker para escolher a cor do gráfico de linhas
+    color_1 = st.sidebar.color_picker('Cor do grafico de linhas','#192646', key=1)
+
+    years_graph_linhas = st.session_state.df_comparacao.columns[3:] # todos os anos presentes na dataframe Comparação
+
+    # range slider para o gráfico de linhas que vai desde o primeiro até o último ano que aparece na lista years_graph_linhas 
+    year_slider_linhas = st.sidebar.slider(
+        "Anos gráfico de linhas:",
+        min_value=int(min(years_graph_linhas)),
+        max_value=int(max(years_graph_linhas)),
+        value=(int(min(years_graph_linhas)), int(max(years_graph_linhas))),
+        step=1
+    )
+
+    st.sidebar.markdown("***")
+
+    # caixa de texto para mudar o titulo do gráfico de barras
+    titulo_barras = st.sidebar.text_input("Título gráfico de barras",st.session_state.option)
+
+    # 2 color pickers para escolher a cor do gráfico de barras no que toca à empresa e à média do setor
+    color_2 = st.sidebar.color_picker('Cor do grafico de barras para a empresa','#192646', key=2)
+    color_3 = st.sidebar.color_picker('Cor do grafico de barras para a média do setor','#959fb8', key=3)
+
+    years_graph_barras = st.session_state.df_comparacao.columns[3:] # todos os anos presentes na dataframe Comparação
+
+    # range slider para o gráfico de linhas que vai desde o primeiro até o último ano que aparece na lista years_graph_barras 
+    year_slider_barras = st.sidebar.slider( 
+        "Anos gráfico de barras:",
+        min_value=int(min(years_graph_barras)),
+        max_value=int(max(years_graph_barras)),
+        value=(int(min(years_graph_barras)), int(max(years_graph_barras))),
+        step=1
+    )
+
+    st.sidebar.markdown("***")
+    
+    # variável utilizada por causa da diferença de maiscúlas/minúsculas que as tabelas dos quadros do setor têm
+    option_comparacao_varias = {'Margem Bruta': 'Margem bruta',
+    'Margem Operacional':'Margem Operacional',
+    'Margem Líquida':'Margem líquida',
+    'Rentabilidade do Ativo':'Rentabilidade do ativo',
+    'Liquidez Geral':'Liquidez geral',
+    'Liquidez Reduzida':'Liquidez reduzida',
+    'Autonomia Financeira':'Autonomia financeira',
+    'Rentabilidade do Capital Próprio':'Rentabilidade do Capital Próprio',
+    'Prazo Médio de Pagamentos':'Prazo médio de pagamentos',
+    'Prazo Médio de Recebimentos':'Prazo médio de recebimentos',
+    }
+
+    # função para calcular a média dos quartis do setor de todas as dimensões, utilizada no medidor.    
+    # função recebe os anos do range slide e devolve os valores dos 3 quartis
+    def medias_per_year(years):
         media_quartil_1 = 0
         media_mediana = 0
         media_quartil_3 = 0
-        flag_year = 0
-        for year in st.session_state.df_comparacao.columns[3:]:
+        flag_year = 0 # flag para contar quantos anos têm o valor do respetivo indicador preenchido. Utilizado para fazer a média.
+        # Alguns anos de certos indicadores não estão preenchidos nas tabelas dos quadros do setor.
+        for year in years:
             
-            if(option=='Liquidez imediata'):
+            if(st.session_state.option=='Liquidez imediata'):
+
+                # se não estiver preenchido dá skip a esse ano
                 if(np.isnan(st.session_state.df_todas_dimen.loc['Caixa e depósitos bancários', str(year) + ' Quartil 1'])):
                     continue
                 media_quartil_1 += st.session_state.df_todas_dimen.loc['Caixa e depósitos bancários', str(year) + ' Quartil 1'] / st.session_state.df_todas_dimen.loc['Passivo corrente', str(year) + ' Quartil 1']
                 media_mediana += st.session_state.df_todas_dimen.loc['Caixa e depósitos bancários', str(year) + ' Mediana'] / st.session_state.df_todas_dimen.loc['Passivo corrente', str(year) + ' Quartil 1']
                 media_quartil_3 += st.session_state.df_todas_dimen.loc['Caixa e depósitos bancários', str(year) + ' Quartil 3'] / st.session_state.df_todas_dimen.loc['Passivo corrente', str(year) + ' Quartil 1']
                 flag_year += 1
-            elif(option=='Endividamento'):
+            elif(st.session_state.option=='Endividamento'):
+                
+                # se não estiver preenchido dá skip a esse ano
                 if(np.isnan(st.session_state.df_todas_dimen.loc['Passivo', str(year) + ' Quartil 1'])):
                     continue
                 media_quartil_1 += st.session_state.df_todas_dimen.loc['Passivo', str(year) + ' Quartil 1'] / st.session_state.df_todas_dimen.loc['Ativo', str(year) + ' Quartil 1'] 
                 media_mediana += st.session_state.df_todas_dimen.loc['Passivo', str(year) + ' Mediana'] / st.session_state.df_todas_dimen.loc['Ativo', str(year) + ' Quartil 1'] 
                 media_quartil_3 += st.session_state.df_todas_dimen.loc['Passivo', str(year) + ' Quartil 3'] / st.session_state.df_todas_dimen.loc['Ativo', str(year) + ' Quartil 1']
                 flag_year += 1
-            elif(option=='Solvabilidade'):
+            elif(st.session_state.option=='Solvabilidade'):
+                
+                # se não estiver preenchido dá skip a esse ano
                 if(np.isnan(st.session_state.df_todas_dimen.loc['Ativo', str(year) + ' Quartil 1'])):
                     continue
                 media_quartil_1 += st.session_state.df_todas_dimen.loc['Ativo', str(year) + ' Quartil 1'] / st.session_state.df_todas_dimen.loc['Passivo', str(year) + ' Quartil 1'] 
                 media_mediana += st.session_state.df_todas_dimen.loc['Ativo', str(year) + ' Mediana'] / st.session_state.df_todas_dimen.loc['Passivo', str(year) + ' Quartil 1'] 
                 media_quartil_3 += st.session_state.df_todas_dimen.loc['Ativo', str(year) + ' Quartil 3'] / st.session_state.df_todas_dimen.loc['Passivo', str(year) + ' Quartil 1']
                 flag_year += 1
-            elif(option=='Alavancagem Financeira'):
+            elif(st.session_state.option=='Alavancagem Financeira'):
+                
+                # se não estiver preenchido dá skip a esse ano
                 if(np.isnan(st.session_state.df_todas_dimen.loc['Financiamentos obtidos', str(year) + ' Quartil 1'])):
                     continue
                 media_quartil_1 += st.session_state.df_todas_dimen.loc['Financiamentos obtidos', str(year) + ' Quartil 1'] / (st.session_state.df_todas_dimen.loc['Financiamentos obtidos', str(year) + ' Quartil 1'] + st.session_state.df_todas_dimen.loc['Capital próprio', str(year) + ' Quartil 1'])
@@ -132,49 +236,63 @@ if 'df_comparacao' and 'df_demo_resultados' and 'df_balanco' and 'df_indicadores
                 media_quartil_3 += st.session_state.df_todas_dimen.loc['Financiamentos obtidos', str(year) + ' Quartil 3'] / (st.session_state.df_todas_dimen.loc['Financiamentos obtidos', str(year) + ' Quartil 3'] + st.session_state.df_todas_dimen.loc['Capital próprio', str(year) + ' Quartil 3'])
                 media_gauge_empresa = media_gauge_empresa * 100
                 flag_year += 1
-            elif(option == 'Rentabilidade do Capital Investido'):
+            elif(st.session_state.option == 'Rentabilidade do Capital Investido'):
+                
+                # se não estiver preenchido dá skip a esse ano
                 if(np.isnan(st.session_state.df_todas_dimen.loc['EBIT', str(year) + ' Quartil 1'])):
                     continue
                 media_quartil_1 += (st.session_state.df_todas_dimen.loc['EBIT', str(year) + ' Quartil 1'] - st.session_state.df_todas_dimen.loc['Imposto', str(year) + ' Quartil 1']) / st.session_state.df_todas_dimen.loc['Ativo', str(year) + ' Quartil 1']
                 media_mediana += (st.session_state.df_todas_dimen.loc['EBIT', str(year) + ' Mediana'] - st.session_state.df_todas_dimen.loc['Imposto', str(year) + ' Mediana']) / st.session_state.df_todas_dimen.loc['Ativo', str(year) + ' Mediana'] 
                 media_quartil_3 += (st.session_state.df_todas_dimen.loc['EBIT', str(year) + ' Quartil 3'] - st.session_state.df_todas_dimen.loc['Imposto', str(year) + ' Quartil 3']) / st.session_state.df_todas_dimen.loc['Ativo', str(year) + ' Quartil 3']
                 flag_year += 1
-            elif(option == 'Nível de Valor Acrescentado'):
+            elif(st.session_state.option == 'Nível de Valor Acrescentado'):
+                
+                # se não estiver preenchido dá skip a esse ano
                 if(np.isnan(st.session_state.df_todas_dimen.loc['VAB em percentagem da produção', str(year) + ' Quartil 1'])):
                     continue
                 media_quartil_1 += st.session_state.df_todas_dimen.loc['VAB em percentagem da produção', str(year) + ' Quartil 1'] / 100
                 media_mediana += st.session_state.df_todas_dimen.loc['VAB em percentagem da produção', str(year) + ' Mediana'] / 100
                 media_quartil_3 += st.session_state.df_todas_dimen.loc['VAB em percentagem da produção', str(year) + ' Quartil 3'] / 100
                 flag_year += 1
-            elif(option == 'Turnover do Ativo'):
+            elif(st.session_state.option == 'Turnover do Ativo'):
+                
+                # se não estiver preenchido dá skip a esse ano
                 if(np.isnan(st.session_state.df_todas_dimen.loc['Volume de Negócios', str(year) + ' Quartil 1'])):
                     continue
                 media_quartil_1 += st.session_state.df_todas_dimen.loc['Volume de Negócios', str(year) + ' Quartil 1'] / st.session_state.df_todas_dimen.loc['Ativo', str(year) + ' Quartil 1']
                 media_mediana += st.session_state.df_dados_setor_todas.loc['Volume de Negócios', str(year) + ' Mediana'] / st.session_state.df_dados_setor_todas.loc['Ativo', str(year) + ' Mediana']
                 media_quartil_3 += st.session_state.df_dados_setor_todas.loc['Volume de Negócios', str(year) + ' Quartil 3'] / st.session_state.df_dados_setor_todas.loc['Ativo', str(year) + ' Quartil 3']
                 flag_year += 1
-            elif(option == '% Rh no Volume de Negócios'):
+            elif(st.session_state.option == '% Rh no Volume de Negócios'):
+                
+                # se não estiver preenchido dá skip a esse ano
                 if(np.isnan(st.session_state.df_todas_dimen.loc['Gastos com Pessoal', str(year) + ' Quartil 1'])):
                     continue
                 media_quartil_1 += st.session_state.df_todas_dimen.loc['Gastos com Pessoal', str(year) + ' Quartil 1'] / st.session_state.df_todas_dimen.loc['Volume de Negócios', str(year) + ' Quartil 1']
                 media_mediana += st.session_state.df_dados_setor_todas.loc['Gastos com Pessoal', str(year) + ' Mediana'] / st.session_state.df_dados_setor_todas.loc['Volume de Negócios', str(year) + ' Mediana']
                 media_quartil_3 += st.session_state.df_dados_setor_todas.loc['Gastos com Pessoal', str(year) + ' Quartil 3'] / st.session_state.df_dados_setor_todas.loc['Volume de Negócios', str(year) + ' Quartil 3']
                 flag_year += 1
-            elif(option == '% FSE no Volume de Negócios'):
+            elif(st.session_state.option == '% FSE no Volume de Negócios'):
+                
+                # se não estiver preenchido dá skip a esse ano
                 if(np.isnan(st.session_state.df_todas_dimen.loc['FSE', str(year) + ' Quartil 1'])):
                     continue
                 media_quartil_1 += st.session_state.df_todas_dimen.loc['FSE', str(year) + ' Quartil 1'] / st.session_state.df_todas_dimen.loc['Volume de Negócios', str(year) + ' Quartil 1']
                 media_mediana += st.session_state.df_dados_setor_todas.loc['FSE', str(year) + ' Mediana'] / st.session_state.df_dados_setor_todas.loc['Volume de Negócios', str(year) + ' Mediana']
                 media_quartil_3 += st.session_state.df_dados_setor_todas.loc['FSE', str(year) + ' Quartil 3'] / st.session_state.df_dados_setor_todas.loc['Volume de Negócios', str(year) + ' Quartil 3']
                 flag_year += 1
-            elif(option == '% CMVMC / Volume de negócios'):
+            elif(st.session_state.option == '% CMVMC / Volume de negócios'):
+                
+                # se não estiver preenchido dá skip a esse ano
                 if(np.isnan(st.session_state.df_todas_dimen.loc['CMVMC', str(year) + ' Quartil 1'])):
                     continue
-                media_quartil_1 += st.session_state.df_todas_dimen.loc['CMVMC', str(year) + ' Quartil 1'] / st.session_state.df_todas_dimen.loc['Volume de Negócios', str(year) + ' Quartil 1']
-                media_mediana += st.session_state.df_dados_setor_todas.loc['CMVMC', str(year) + ' Mediana'] / st.session_state.df_dados_setor_todas.loc['Volume de Negócios', str(year) + ' Mediana']
-                media_quartil_3 += st.session_state.df_dados_setor_todas.loc['CMVMC', str(year) + ' Quartil 3'] / st.session_state.df_dados_setor_todas.loc['Volume de Negócios', str(year) + ' Quartil 3']
+                media_quartil_1 += st.session_state.df_todas_dimen.loc['CMVMC', str(year) + ' Quartil 1'] / st.session_state.df_todas_dimen.loc['Volume de Neg贸cios', str(year) + ' Quartil 1']
+                media_mediana += st.session_state.df_dados_setor_todas.loc['CMVMC', str(year) + ' Mediana'] / st.session_state.df_dados_setor_todas.loc['Volume de Neg贸cios', str(year) + ' Mediana']
+                media_quartil_3 += st.session_state.df_dados_setor_todas.loc['CMVMC', str(year) + ' Quartil 3'] / st.session_state.df_dados_setor_todas.loc['Volume de Neg贸cios', str(year) + ' Quartil 3']
                 flag_year += 1
-            elif(option == '% Custos no Volume de Negócios'):
+            elif(st.session_state.option == '% Custos no Volume de Negócios'):
+                
+                # se não estiver preenchido dá skip a esse ano
                 if(np.isnan(st.session_state.df_todas_dimen.loc['CMVMC', str(year) + ' Quartil 1']) and np.isnan(st.session_state.df_todas_dimen.loc['FSE', str(year) + ' Quartil 1']) and np.isnan(st.session_state.df_todas_dimen.loc['Gastos com Pessoal', str(year) + ' Quartil 1'])):
                     continue
                 media_quartil_1 += (st.session_state.df_todas_dimen.loc['CMVMC', str(year) + ' Quartil 1']+st.session_state.df_todas_dimen.loc['FSE', str(year) + ' Quartil 1']+st.session_state.df_todas_dimen.loc['Gastos com Pessoal', str(year) + ' Quartil 1']) / st.session_state.df_todas_dimen.loc['Volume de Negócios', str(year) + ' Quartil 1']
@@ -182,147 +300,246 @@ if 'df_comparacao' and 'df_demo_resultados' and 'df_balanco' and 'df_indicadores
                 media_quartil_3 += (st.session_state.df_dados_setor_todas.loc['CMVMC', str(year) + ' Quartil 3']+st.session_state.df_dados_setor_todas.loc['FSE', str(year) + ' Quartil 3']+st.session_state.df_dados_setor_todas.loc['Gastos com Pessoal', str(year) + ' Quartil 3']) / st.session_state.df_dados_setor_todas.loc['Volume de Negócios', str(year) + ' Quartil 3']
                 flag_year += 1
             else:
-                if(np.isnan(st.session_state.df_todas_dimen.loc[option_comparacao_varias.get(option), str(year) + ' Quartil 1'])):
-                    continue
-                media_quartil_1 += st.session_state.df_todas_dimen.loc[option_comparacao_varias.get(option), str(year) + ' Quartil 1']
-                media_mediana += st.session_state.df_todas_dimen.loc[option_comparacao_varias.get(option),str(year)+' Mediana']
-                media_quartil_3 += st.session_state.df_todas_dimen.loc[option_comparacao_varias.get(option),str(year)+' Quartil 3']
-                flag_year += 1
                 
+                # se não estiver preenchido dá skip a esse ano
+                if(np.isnan(st.session_state.df_todas_dimen.loc[option_comparacao_varias.get(st.session_state.option), str(year) + ' Quartil 1'])):
+                    continue
+                media_quartil_1 += st.session_state.df_todas_dimen.loc[option_comparacao_varias.get(st.session_state.option), str(year) + ' Quartil 1']
+                media_mediana += st.session_state.df_todas_dimen.loc[option_comparacao_varias.get(st.session_state.option),str(year)+' Mediana']
+                media_quartil_3 += st.session_state.df_todas_dimen.loc[option_comparacao_varias.get(st.session_state.option),str(year)+' Quartil 3']
+                flag_year += 1
+
+        # cálcula da média         
         media_quartil_1 = media_quartil_1 / (flag_year if not flag_year == 0 else 1)
         media_mediana = media_mediana / (flag_year if not flag_year == 0 else 1)
         media_quartil_3 = media_quartil_3 / (flag_year if not flag_year == 0 else 1)
                 
-        return media_quartil_1, media_mediana, media_quartil_3, flag_year
+        return media_quartil_1, media_mediana, media_quartil_3
      
     with col1_logo:
-        st.image('logo1.png', width=300, use_column_width=True)
+        st.image('images/logo1.png', use_column_width=True) # logo STREAM
         
     
     with col2_text:
-        st.markdown('<p class="title-font">Rentabilidade de negócio</p>', unsafe_allow_html=True)
-        
-        
-        st.markdown('<p class="sub_header-font">'+option+'</p>', unsafe_allow_html=True)
+        st.markdown(f'<p class="title-font">{titulo_principal}</p>', unsafe_allow_html=True)       
+        st.markdown('<p class="sub_header-font">'+st.session_state.option+'</p>', unsafe_allow_html=True)
         st.divider()
         
     with col1_mid:
-        st.markdown('<p class="sub_header-font">Desempenho agregado nos anos avaliados</p>', unsafe_allow_html=True)
 
-        media_gauge_empresa = statistics.mean(st.session_state.df_comparacao.loc[st.session_state.df_comparacao.loc[st.session_state.df_comparacao['Indicador'] == option].index[0], st.session_state.df_comparacao.columns[3:]])*100
+        # anos selecionados no range slider do medidor
+        range_years_gauge = list(range(year_slider_gauge[0],year_slider_gauge[1]+1,1)) 
+
+        # apresentação do titulo do medidor
+        st.markdown(f'<p class="sub_header-font">{titulo_gauge}</p>', unsafe_allow_html=True) 
         
-        media_quartil_1, media_mediana, media_quartil_3, flag_year = medias_per_year()
+        # média da empresa
+        media_gauge_empresa = statistics.mean(st.session_state.df_comparacao.loc[st.session_state.df_comparacao.loc[st.session_state.df_comparacao['Indicador'] == st.session_state.option].index[0], range_years_gauge])*100
+        
+        # média do setor de todas as dimensões
+        media_quartil_1, media_mediana, media_quartil_3 = medias_per_year(range_years_gauge)
         
         
         st.write("")
         st.write("")
         
+        # apresentação da imagem com o medidor e o respetivo texto 
         if media_gauge_empresa == 0:
-            st.image('0.png',use_column_width = True)
+            st.image('images/0.png',use_column_width = True)
         elif media_quartil_1 == 0 and media_mediana == 0 and media_quartil_3 == 0:
-            st.image('nan.png',use_column_width = True)
-            st.markdown('<p class="sub_header-font">Dados Indisponíveis</p>', unsafe_allow_html=True)
+            st.image('images/nan.png',use_column_width = True)
+            st.markdown('<p class="sub_header-font"><b>Dados Indisponíveis</b></p>', unsafe_allow_html=True)
         elif media_gauge_empresa < media_quartil_1:
-            fraco()
+            st.image('images/low.png',use_column_width = True)
+            st.markdown('<p class="sub_header-font"><b>Fraco</b></p>', unsafe_allow_html=True)
         elif media_gauge_empresa >= media_quartil_1 and media_gauge_empresa < media_mediana:
-            mod_fraco()
+            st.image('images/mod_low.png',use_column_width = True)
+            st.markdown('<p class="sub_header-font"><b>Insuficiente</b></p>', unsafe_allow_html=True)
         elif media_gauge_empresa >= media_mediana and media_gauge_empresa < media_quartil_3:
-            mod_forte()
+            st.image('images/mod_high.png',use_column_width = True)
+            st.markdown('<p class="sub_header-font"><b>Forte</b></p>', unsafe_allow_html=True)  
         elif media_gauge_empresa >= media_quartil_3:
-            forte()
+            st.image('images/high.png',use_column_width = True)
+            st.markdown('<p class="sub_header-font"><b>Excelente</b></p>', unsafe_allow_html=True)
         else:
-            st.image('nan.png',use_column_width = True)
-            st.markdown('<p class="sub_header-font">Dados Indisponíveis</p>', unsafe_allow_html=True)
+            st.image('images/nan.png',use_column_width = True)
+            st.markdown('<p class="sub_header-font"><b>Dados Indisponíveis</b></p>', unsafe_allow_html=True)
+
     with col2_mid:
-        st.markdown('<p class="sub_header-font">Diferença entre o desempenho da empresa e a média do setor</p>', unsafe_allow_html=True)
-        value_empresa = st.session_state.df_comparacao.loc[st.session_state.df_comparacao['Indicador'] == option,st.session_state.df_comparacao.columns[3:]].iloc[0]
-       
-        if(option=='Alavancagem Financeira'):
-            value_empresa = value_empresa * 100
+        
+        # lista de anos selecionados no range slider do gráfico de linhas
+        range_years_linhas = list(range(year_slider_linhas[0],year_slider_linhas[1]+1,1))
+
+        # titulo do gráfico de linhas
+        st.markdown(f'<p class="sub_header-font">{titulo_linhas}</p>', unsafe_allow_html=True)
+
+        # valores da empresa do respetivo indicador selecionado, por ano
+        value_empresa = st.session_state.df_comparacao.loc[st.session_state.df_comparacao['Indicador'] == st.session_state.option,st.session_state.df_comparacao.columns[3:]].iloc[0]
+        
+
+        if(st.session_state.option=='Alavancagem Financeira'):
+            value_empresa = value_empresa * 100 
             
+            # valores da média do setor, de todas as dimensões, do respetivo indicador selecionado, por ano
             value_media_setor = st.session_state.df_dados_setor_todas.loc[15, st.session_state.df_comparacao.columns[3:]] / (st.session_state.df_dados_setor_todas.loc[15, st.session_state.df_comparacao.columns[3:]] + st.session_state.df_dados_setor_todas.loc[8,st.session_state.df_comparacao.columns[3:]]) * 100
             
         else:
-            value_media_setor = st.session_state.df_comparacao.loc[st.session_state.df_comparacao['Indicador'] == option,st.session_state.df_comparacao.columns[3:]].iloc[1]
+            # valores da média do setor, de todas as dimensões, do respetivo indicador selecionado, por ano
+            value_media_setor = st.session_state.df_comparacao.loc[st.session_state.df_comparacao['Indicador'] == st.session_state.option,st.session_state.df_comparacao.columns[3:]].iloc[1]
             
+        # calcula a diferença entre os valores da empresa e a média do setor 
         value_diferenca = value_empresa-value_media_setor
-        if(option == 'Alavancagem Financeira'):
+        if(st.session_state.option == 'Alavancagem Financeira'):
+            value_diferenca = value_diferenca/100 
+        if(st.session_state.option == 'Prazo Médio de Pagamentos' or st.session_state.option == 'Prazo Médio de Recebimentos'):
             value_diferenca = value_diferenca/100
-        if(option == 'Prazo Médio de Pagamentos' or option == 'Prazo Médio de Recebimentos'):
-            value_diferenca = value_diferenca/100
         
         
-        row1_col2_mid = st.columns(len(value_diferenca))
-        for (col,year,value) in zip(row1_col2_mid,st.session_state.df_comparacao.columns[3:],value_diferenca):
-        
-            col.markdown('<p class="text-font">'+str(year)+'</p>', unsafe_allow_html=True)
+        row1_col2_mid = st.columns(len(range_years_linhas)) # vai criar uma coluna para cada ano selecionado no range slider do gráfico de linhas
+        for (col,year,value) in zip(row1_col2_mid,range_years_linhas,value_diferenca.loc[year_slider_linhas[0]:year_slider_linhas[1]]):
+            # em cada coluna criada coloca-se o ano e o valor da diferença em percentagem
+            col.markdown('<p class="text-font"><b>'+str(year)+'</b></p>', unsafe_allow_html=True)
 
             if(~np.isnan(value)):    
-                col.markdown('<p class="sub_header-font">'+str(round(value*100,2))+'%</p>', unsafe_allow_html=True)
+                # se tiver valor da diferença
+                col.markdown('<p style="font-weight: 1000;font-size: 20px;">'+str(round(value*100,2))+'%</p>', unsafe_allow_html=True)
             else:
-                col.markdown('<p class="sub_header-font">Sem Dados</p>', unsafe_allow_html=True)
+                # se não tiver valor da diferença
+                col.markdown('<p style="font-weight: 1000;font-size: 20px;text-align:center;">Sem Dados</p>', unsafe_allow_html=True)
 
-        
-        line_fig = px.line(x=st.session_state.df_comparacao.columns[3:], y=value_diferenca*100)
-        
-        
-        #Arranjar a linha aos pontos. Acho que a aquela formula não está correta
-        
-        # line_fig.add_trace(
-            # go.Scatter(
-                # x=st.session_state.df_comparacao.columns[3:],
-                # y = 0.045*value_diferenca + 0.0252,
-                # mode="lines",
-                # line=go.scatter.Line(color="gray"),
-                # showlegend=False)
-        # )
-        line_fig.update_traces(line_color='#192646', line_width=5)       
+        # criação do gráfico de linhas com uma trendline (na verdade é um gráfico de dispersão, mas os pontos estão unidos por linhas)
+        line_fig = px.scatter(x=range_years_linhas, y=value_diferenca.loc[year_slider_linhas[0]:year_slider_linhas[1]]*100, trendline="ols")    
+
+
+        line_fig.update_traces(line_color=color_1, line_width=5, mode="lines") # o mode="lines" é para criar linhas entre os pontos   
         line_fig.update_layout(
             xaxis=dict(
+                type="category",
                 tickmode='array',
                 tickvals=st.session_state.df_comparacao.columns[3:],
-                ticktext=[str(year) for year in st.session_state.df_comparacao.columns[3:]],
+                ticktext=[str(year)+"         " for year in st.session_state.df_comparacao.columns[3:]],
                 
             ),
+            yaxis=dict(
+                    ticksuffix=" %",
+                    tickprefix="        "
+            ),
+            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='rgba(0,0,0,0)',
             xaxis_title=None,
             yaxis_title=None,
-            height = 250
+            height = 260
 
         )
+
+        # unica forma de transformar uma trendline em uma linha pontilhada
+        for  k, trace  in enumerate(line_fig.data):
+                if trace.mode is not None and trace.mode == 'lines':
+                    line_fig.data[1].update(line_dash='dot',line_width=3)
+
+    
+        st.plotly_chart(line_fig,use_container_width=True, config=config)
         
-        st.plotly_chart(line_fig,use_container_width=True)
+
     with col1_bot:
+        # lista de anos selecionados no range slider do gráfico de barras
+        range_years_barras = list(range(year_slider_barras[0],year_slider_barras[1]+1,1)) 
+
+        # toggle box para mudar entre um gráfico de barras ou linhas
+        toggle_barras_linhas = st.sidebar.toggle('Barras/Linhas')
+
+
         bar_fig = go.Figure()
-        bar_fig.add_trace(go.Bar(x=st.session_state.df_comparacao.columns[3:], y=value_empresa, name="Empresa", marker=dict(color='#192646')))
-        bar_fig.add_trace(go.Bar(x=st.session_state.df_comparacao.columns[3:], y=value_media_setor, name="Média do Setor", marker=dict(color='#959fb8')))
+
+        # adiciona à figura um gráfico de barras com os valores da empresa
+        bar_fig.add_trace(go.Bar(x=range_years_barras, y=value_empresa.loc[year_slider_barras[0]:year_slider_barras[1]]*100, name="Empresa", marker=dict(color=color_2)))
+
+        # dependendo da toggle box é apresentado um gráfico de barras ou um de linhas
+        if toggle_barras_linhas:
+            bar_fig.add_trace(go.Scatter(x=range_years_barras, y=value_media_setor.loc[year_slider_barras[0]:year_slider_barras[1]]*100, name="Média do Setor", line={'width': 3}, marker=dict(color=color_3)))
+        else:
+            bar_fig.add_trace(go.Bar(x=range_years_barras, y=value_media_setor.loc[year_slider_barras[0]:year_slider_barras[1]]*100, name="Média do Setor", marker=dict(color=color_3)))
         bar_fig.update_layout(
             xaxis=dict(
                 tickmode='array',
                 tickvals=st.session_state.df_comparacao.columns[3:],
-                ticktext=[str(year) for year in st.session_state.df_comparacao.columns[3:]],            
+                ticktext=[str(year)+"         " for year in st.session_state.df_comparacao.columns[3:]],
+                ticksuffix="       "         
             ),
+            yaxis=dict(
+                    ticksuffix=" %",
+                    tickprefix="        ",
+                    zeroline=True, 
+                    zerolinewidth=1, 
+                    zerolinecolor="black",
+            ),
+            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='rgba(0,0,0,0)',
+            title = titulo_barras,
             height = 320
 
         )
         
-        st.plotly_chart(bar_fig, use_container_width=True)
+        st.plotly_chart(bar_fig, use_container_width=True, config=config)
+
     with col2_bot:
     
-     
+        # apresentação do texto dependendo como a média da empresa se compara à média dos quartis do setor
         if media_gauge_empresa == 0:
-            st.markdown('<p class="sub_header-font">Dados Indisponíveis</p>', unsafe_allow_html=True)
+            txt = ""
+        elif media_quartil_1 == 0 and media_mediana == 0 and media_quartil_3 == 0:
+            txt = ""
         elif media_gauge_empresa < media_quartil_1:
-            st.markdown('<p class="sub_header-font">Em comparação com a média móvel do setor nos anos avaliados do indicador <strong>'+option+'</strong>, o desempenho da empresa no mesmo intervalo foi <strong>fraco</strong>, figurando entre as <strong>25% piores</strong>.</p>', unsafe_allow_html=True)
+            txt = "Em comparação com a média do setor nos anos avaliados do indicador <span style='font-weight: 1000;'><i>"+st.session_state.option+"</i></span>, o desempenho da empresa foi <b><i>Fraco</i></span> (entre os 25% inferiores da mesma dimensão)."
+            
         elif media_gauge_empresa >= media_quartil_1 and media_gauge_empresa < media_mediana:
-            st.markdown('<p class="sub_header-font">Em comparação com a média móvel do setor nos anos avaliados do indicador <strong>'+option+'</strong>, o desempenho da empresa no mesmo intervalo foi <strong>moderadamente fraco</strong>, figurando entre as <strong>50% piores</strong>.</p>', unsafe_allow_html=True)
-
+            txt = "Em comparação com a média do setor nos anos avaliados do indicador <span style='font-weight: 1000;'><i>"+st.session_state.option+"</i></span>, o desempenho da empresa foi <span style='font-weight: 1000;'><i>Insuficiente</i></span> (entre os 50% inferiores da mesma dimensão)."
+        
         elif media_gauge_empresa >= media_mediana and media_gauge_empresa < media_quartil_3:
-            st.markdown('<p class="sub_header-font">Em comparação com a média móvel do setor nos anos avaliados do indicador <strong>'+option+'</strong>, o desempenho da empresa no mesmo intervalo foi <strong>moderadamente forte</strong>, figurando entre as <strong>50% melhores</strong>.</p>', unsafe_allow_html=True)
-
+            txt = "Em comparação com a média do setor nos anos avaliados do indicador <span style='font-weight: 1000;'><i>"+st.session_state.option+"</i></span>, o desempenho da empresa foi <span style='font-weight: 1000;'><i>Forte</i></span> (entre os 50% superiores da mesma dimensão)."
+        
         elif media_gauge_empresa >= media_quartil_3:
-            st.markdown('<p class="sub_header-font">Em comparação com a média móvel do setor nos anos avaliados do indicador <strong>'+option+'</strong>, o desempenho da empresa no mesmo intervalo foi <strong>forte</strong>, figurando entre as <strong>25% melhores</strong>.</p>', unsafe_allow_html=True)
-
+            txt = "Em comparação com a média do setor nos anos avaliados do indicador <span style='font-weight: 1000;'><i>"+st.session_state.option+"</i></span>, o desempenho da empresa foi <span style='font-weight: 1000;'><i>Excelente</i></span> (entre os 25% superiores da mesma dimensão)."
+    
         else:
-            st.markdown('<p class="sub_header-font">Dados Indisponíveis</p>', unsafe_allow_html=True)
+            txt = ""
+
+        # caixa de texto para modificar o texto
+        txt = st.sidebar.text_area("Texto",txt)
+
+        # CSS dependendo se o texto existe ou não
+        if txt=="":
+            st.markdown("""
+            <style>
+            div[data-testid="stHorizontalBlock"]:nth-child(3) div[data-testid="column"]:nth-child(2)  {
+                background-color: white !important;
+            }
+            </style>
+            """, unsafe_allow_html=True)
+        else:
+            st.markdown("""   
+            <style>
+                div[data-testid="stHorizontalBlock"]:nth-child(3) div[data-testid="column"]:nth-child(2)  {
+                    background-color: rgb(195, 196, 204) !important;
+                    color: white;
+                    border-radius: 25px;
+                    padding: 70px 35px;
+                    align-items: center;
+                    text-align: left;
+                }
+                div[data-testid="stHorizontalBlock"]:nth-child(3) div[data-testid="column"]:nth-child(2) div[data-testid="stVerticalBlockBorderWrapper"]:first-child{
+                    padding: 30px 10px 30px 10px;
+                }
+            </style>
+            """, unsafe_allow_html=True)
+        
+        st.markdown(f'<p style="font-size:22px;">{txt}</p>', unsafe_allow_html=True)
+        
+    # botões para fazer o download da imagem, PDF e copiar para a clipboard a dashboard 
+    Print.buttons()
+    
+    st.markdown('<p style="text-align: right;" class="text-font">Fonte: Banco de Portugal</p>', unsafe_allow_html=True)
+
+    
 else:
     st.write('Carregar ficheiros primeiro')
