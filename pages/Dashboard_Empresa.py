@@ -1,11 +1,8 @@
-import base64
 import plotly.graph_objects as go # pip install plotly
 import requests
 import streamlit as st # pip install streamlit
 import Print as Print # ficheiro Print.py
 import streamlit.components.v1 as components
-import pdfkit
-import os
 
 def add_notation_to_fig(fig, years, values, color, enabled):
     offset = max(values)*10
