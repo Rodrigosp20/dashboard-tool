@@ -1,7 +1,23 @@
+import base64
 import plotly.graph_objects as go # pip install plotly
+import requests
 import streamlit as st # pip install streamlit
 import Print as Print # ficheiro Print.py
+import streamlit.components.v1 as components
+import pdfkit
+import os
 
+def add_notation_to_fig(fig, years, values, color, enabled):
+    offset = max(values)*10
+    if enabled:
+        for i, val in enumerate(values): 
+            fig.add_annotation(
+                x=years[i],
+                y=val*100 + offset,
+                text=f"{int(val*100)} %",
+                font=dict(color=color, size=12),
+                showarrow=False
+            )
 
 # Configuração da página
 st.set_page_config(
@@ -104,7 +120,7 @@ if 'df_comparacao' in st.session_state: # se a dataframe Comparação estiver cr
     options_array= ['Margem Bruta', 'Margem Operacional', 'Margem Líquida',
     'Rentabilidade do Ativo', 'Nível de Valor Acrescentado','Liquidez Geral','Liquidez Reduzida','Liquidez imediata','Autonomia Financeira','Endividamento','Solvabilidade',
     'Alavancagem Financeira','Rentabilidade do Capital Investido','Rentabilidade do Capital Próprio','Turnover do Ativo','% Rh no Volume de Negócios',
-    '% FSE no Volume de Negócios','% CMVMC / Volume de negócios','% Custos no Volume de Negócios','Prazo Médio de Pagamentos','Prazo Médio de Recebimentos']
+    '% FSE no Volume de Negócios','% CMVMC / Volume de negócios','% Custos no Volume de Negócios','Prazo Médio de Pagamentos','Prazo Médio de Recebimentos', 'Taxa de Exportação']
 
     # inicia o indicador a Margem Bruta
     if "option" not in st.session_state:
@@ -114,7 +130,7 @@ if 'df_comparacao' in st.session_state: # se a dataframe Comparação estiver cr
     st.session_state.option = st.sidebar.selectbox('Escolher Indicador para o Dashboard por Indicador',('Margem Bruta', 'Margem Operacional', 'Margem Líquida',
     'Rentabilidade do Ativo', 'Nível de Valor Acrescentado','Liquidez Geral','Liquidez Reduzida','Liquidez imediata','Autonomia Financeira','Endividamento','Solvabilidade',
     'Alavancagem Financeira','Rentabilidade do Capital Investido','Rentabilidade do Capital Próprio','Turnover do Ativo','% Rh no Volume de Negócios',
-    '% FSE no Volume de Negócios','% CMVMC / Volume de negócios','% Custos no Volume de Negócios','Prazo Médio de Pagamentos','Prazo Médio de Recebimentos'),index=options_array.index(st.session_state.option), key = 'new_option',on_change = option_callback)
+    '% FSE no Volume de Negócios','% CMVMC / Volume de negócios','% Custos no Volume de Negócios','Prazo Médio de Pagamentos','Prazo Médio de Recebimentos', 'Taxa de Exportação'),index=options_array.index(st.session_state.option), key = 'new_option',on_change = option_callback)
 
     st.markdown("## Dashboard Empresa")
     # na coluna da esquerda ficaram todos os gráficos mais pequenos e o logotipo da STREAM, e na coluna da direita ficará o gráfico maior
@@ -143,6 +159,8 @@ if 'df_comparacao' in st.session_state: # se a dataframe Comparação estiver cr
                 value=(int(min(years_graph)), int(max(years_graph))),
                 step=1
             )
+
+            annotation = st.sidebar.checkbox("Adicionar Label (Valor)", value=True)
             
             color = st.sidebar.color_picker('Escolher uma cor','#192646') # color picker para escolher a cor para os gráficos
             
@@ -156,7 +174,8 @@ if 'df_comparacao' in st.session_state: # se a dataframe Comparação estiver cr
 
             config = {'displaylogo': False} # configuração para desabilitar o logo do plotly em cada gráfico
             
-
+            add_notation_to_fig(margem_operacional, range_years, margem_operacional_values_graph, color, annotation)
+                
             margem_operacional.update_layout(
                 xaxis=dict( # alteração do eixo X para utilizar apenas os valores que lhe são dados no range_years, caso contrário ele começa a utilizar casas decimais entre os valores do X
                     tickmode='array',
@@ -191,6 +210,8 @@ if 'df_comparacao' in st.session_state: # se a dataframe Comparação estiver cr
 
             rent_capital_proprio.add_trace(go.Bar(x=range_years, y=rent_capital_proprio_values_graph*100, width=[0.7, 0.7, 0.7, 0.7, 0.7, 0.7], marker=dict(color=color)))
             
+            add_notation_to_fig(rent_capital_proprio, range_years, rent_capital_proprio_values_graph, color, annotation)
+
             rent_capital_proprio.update_layout(
                 xaxis=dict(
                     tickmode='array',
@@ -223,6 +244,8 @@ if 'df_comparacao' in st.session_state: # se a dataframe Comparação estiver cr
 
             liquidez_geral.add_trace(go.Bar(x=range_years, y=liquidez_geral_values_graph*100, width=[0.7, 0.7, 0.7, 0.7, 0.7, 0.7], marker=dict(color=color)))
             
+            add_notation_to_fig(liquidez_geral, range_years, liquidez_geral_values_graph, color, annotation)
+
             liquidez_geral.update_layout(
                 xaxis=dict(
                     tickmode='array',
@@ -256,6 +279,8 @@ if 'df_comparacao' in st.session_state: # se a dataframe Comparação estiver cr
 
             liquidez_reduzida.add_trace(go.Bar(x=range_years, y=liquidez_reduzida_values_graph*100, width=[0.7, 0.7, 0.7, 0.7, 0.7, 0.7], marker=dict(color=color)))
             
+            add_notation_to_fig(liquidez_reduzida, range_years, liquidez_reduzida_values_graph, color, annotation)
+
             liquidez_reduzida.update_layout(
                 xaxis=dict(
                     tickmode='array',
@@ -288,6 +313,8 @@ if 'df_comparacao' in st.session_state: # se a dataframe Comparação estiver cr
 
             autonomia_financeira.add_trace(go.Bar(x=list(range(year_slider[0],year_slider[1]+1,1)), y=autonomia_financeira_values_graph*100, width=[0.7, 0.7, 0.7, 0.7, 0.7, 0.7], marker=dict(color=color)))
             
+            add_notation_to_fig(autonomia_financeira, range_years, autonomia_financeira_values_graph, color, annotation)
+
             autonomia_financeira.update_layout(
                 xaxis=dict(
                     tickmode='array',
@@ -320,6 +347,8 @@ if 'df_comparacao' in st.session_state: # se a dataframe Comparação estiver cr
 
             alavancagem_financeira.add_trace(go.Bar(x=range_years, y=alavancagem_financeira_values_graph*100, width=[0.7, 0.7, 0.7, 0.7, 0.7, 0.7], marker=dict(color=color)))
             
+            add_notation_to_fig(alavancagem_financeira, range_years, alavancagem_financeira_values_graph, color, annotation)
+
             alavancagem_financeira.update_layout(
                 xaxis=dict(
                     tickmode='array',
@@ -355,7 +384,7 @@ if 'df_comparacao' in st.session_state: # se a dataframe Comparação estiver cr
         indice = go.Figure()
 
 
-        indice.add_trace(go.Bar(x=indice_values_graph-100, y="          "+indicadores_graph, text=round(indice_values_graph).astype('Int64').astype('str')+"     ", 
+        indice.add_trace(go.Bar(x=indice_values_graph-100, y="          "+indicadores_graph, text=round(indice_values_graph).astype('Int64').astype('str')+"     " if annotation else None, 
         textposition='outside', base=100, orientation='h', marker=dict(color=color)))
         
         indice.update_layout(
@@ -372,9 +401,67 @@ if 'df_comparacao' in st.session_state: # se a dataframe Comparação estiver cr
 
         st.plotly_chart(indice,use_container_width=True, config=config)
 
+    
     # botões para fazer o download da imagem, PDF e copiar para a clipboard a dashboard 
     Print.buttons()
-    
+
+    @st.cache_resource
+    def load_unpkg(src: str) -> str:
+        return requests.get(src).text
+
+
+    HTML_2_CANVAS = load_unpkg("https://unpkg.com/html2canvas@1.4.1/dist/html2canvas.js")
+    JSPDF = load_unpkg("https://unpkg.com/jspdf@latest/dist/jspdf.umd.min.js")
+
+    if st.sidebar.button("DOWNLOAD PDF"):
+        components.html(
+                        f"""
+            <script>{HTML_2_CANVAS}</script>
+            <script>{JSPDF}</script>
+            <script>
+            const html2canvas = window.html2canvas
+            const {{ jsPDF }} = window.jspdf
+
+            const streamlitDoc = window.parent.document;
+            const stApp = streamlitDoc.querySelector('.main > .block-container');
+
+            const buttons = Array.from(streamlitDoc.querySelectorAll('.stButton > button'));
+            const pdfButton = buttons.find(el => el.innerText === 'DOWNLOAD PDF');
+            const docHeight = stApp.scrollHeight;
+            const docWidth = stApp.scrollWidth;
+
+            let topLeftMargin = 15;
+            let pdfWidth = docHeight + (topLeftMargin * 2);
+            let pdfHeight = (pdfWidth * 1.5) + (topLeftMargin * 2);
+            let canvasImageWidth = docWidth;
+            let canvasImageHeight = docHeight;
+
+            let totalPDFPages = Math.ceil(docHeight / pdfHeight)-1;
+
+            pdfButton.innerText = 'Creating PDF...';
+
+            html2canvas(stApp, {{ allowTaint: true }}).then(function (canvas) {{
+
+                canvas.getContext('2d');
+                let imgData = canvas.toDataURL("image/jpeg", 1.0);
+
+                let pdf = new jsPDF('p', 'px', [pdfWidth, pdfHeight]);
+                pdf.addImage(imgData, 'JPG', topLeftMargin, topLeftMargin, canvasImageWidth, canvasImageHeight);
+
+                for (var i = 1; i <= totalPDFPages; i++) {{
+                    pdf.addPage();
+                    pdf.addImage(imgData, 'JPG', topLeftMargin, -(pdfHeight * i) + (topLeftMargin*4), canvasImageWidth, canvasImageHeight);
+                }}
+
+                pdf.save('test.pdf');
+                pdfButton.innerText = 'DOWNLOAD PDF';
+            }})
+            </script>
+            """,
+                        height=0,
+                        width=0,
+                    )
+
     st.markdown('<p style="text-align: right;" class="text-font">Fonte: Banco de Portugal</p>', unsafe_allow_html=True)
         
 else:

@@ -126,8 +126,8 @@ def prazo_medio_recebimentos(col):
 def valor_gerado_rh(col):
     return st.session_state.df_demo_resultados.loc[31,col]/st.session_state.df_demo_resultados.loc[32,col]
     
-# def taxa_exportacao(col):
-    # return 
+def taxa_exportacao(col):
+    return st.session_state.df_demo_resultados.loc[33,col]/st.session_state.df_demo_resultados.loc[0,col]
 
 def liquidez_geral(col):
     return st.session_state.df_balanco.loc[12,col]/st.session_state.df_balanco.loc[49,col]
@@ -193,7 +193,7 @@ def calc_indicadores_df():
         st.session_state.df_indicadores.at[12,year] = prazo_medio_pagamentos(year)
         st.session_state.df_indicadores.at[13,year] = prazo_medio_recebimentos(year)
         st.session_state.df_indicadores.at[14,year] = valor_gerado_rh(year)
-        #st.session_state.df_indicadores.at[15,year] = taxa_exportacao(year)
+        st.session_state.df_indicadores.at[15,year] = taxa_exportacao(year)
         st.session_state.df_indicadores.at[17,year] = liquidez_geral(year)
         st.session_state.df_indicadores.at[18,year] = liquidez_reduzida(year)
         st.session_state.df_indicadores.at[19,year] = liquidez_imediata(year)
@@ -467,8 +467,10 @@ def main():
         with st.expander("Balanço"):
             st.write(st.session_state.df_balanco)
 
+    col1, col2 = st.columns(2)
 
-    st.markdown("### Dados do Setor")        
+    col1.markdown("### Dados do Setor")
+    col2.link_button("Banco de Portugal", "https://www.bportugal.pt/QS/qsweb/Dashboards")        
     st.markdown("##### Todas as Dimensões")   
     uploaded_file_todas_dimen = st.file_uploader("Selecionar ficheiro <Todas as dimensões>") # File uploader para o excel com as tabelas com o quadro de setor para todas as dimensões
 

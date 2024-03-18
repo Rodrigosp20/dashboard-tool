@@ -104,7 +104,7 @@ if 'df_todas_dimen' and 'df_dados_setor_todas' and 'df_comparacao' in st.session
     options_array= ['Margem Bruta', 'Margem Operacional', 'Margem Líquida',
     'Rentabilidade do Ativo', 'Nível de Valor Acrescentado','Liquidez Geral','Liquidez Reduzida','Liquidez imediata','Autonomia Financeira','Endividamento','Solvabilidade',
     'Alavancagem Financeira','Rentabilidade do Capital Investido','Rentabilidade do Capital Próprio','Turnover do Ativo','% Rh no Volume de Negócios',
-    '% FSE no Volume de Negócios','% CMVMC / Volume de negócios','% Custos no Volume de Negócios','Prazo Médio de Pagamentos','Prazo Médio de Recebimentos']
+    '% FSE no Volume de Negócios','% CMVMC / Volume de negócios','% Custos no Volume de Negócios','Prazo Médio de Pagamentos','Prazo Médio de Recebimentos','Taxa de Exportação']
     
     # inicia o indicador a Margem Bruta
     if "option" not in st.session_state:
@@ -114,7 +114,7 @@ if 'df_todas_dimen' and 'df_dados_setor_todas' and 'df_comparacao' in st.session
     st.session_state.option = st.sidebar.selectbox('Escolher Indicador',('Margem Bruta', 'Margem Operacional', 'Margem Líquida',
     'Rentabilidade do Ativo', 'Nível de Valor Acrescentado','Liquidez Geral','Liquidez Reduzida','Liquidez imediata','Autonomia Financeira','Endividamento','Solvabilidade',
     'Alavancagem Financeira','Rentabilidade do Capital Investido','Rentabilidade do Capital Próprio','Turnover do Ativo','% Rh no Volume de Negócios',
-    '% FSE no Volume de Negócios','% CMVMC / Volume de negócios','% Custos no Volume de Negócios','Prazo Médio de Pagamentos','Prazo Médio de Recebimentos'),index=options_array.index(st.session_state.option), key = 'new_option',on_change = option_callback)
+    '% FSE no Volume de Negócios','% CMVMC / Volume de negócios','% Custos no Volume de Negócios','Prazo Médio de Pagamentos','Prazo Médio de Recebimentos', 'Taxa de Exportação'),index=options_array.index(st.session_state.option), key = 'new_option',on_change = option_callback)
 
     # caixa de texto para mudar o título. Por omissão é "Rentabilidade do negócio"
     titulo_principal = st.sidebar.text_input("Titulo principal","Rentabilidade do negócio")
@@ -187,6 +187,7 @@ if 'df_todas_dimen' and 'df_dados_setor_todas' and 'df_comparacao' in st.session
     'Rentabilidade do Capital Próprio':'Rentabilidade do Capital Próprio',
     'Prazo Médio de Pagamentos':'Prazo médio de pagamentos',
     'Prazo Médio de Recebimentos':'Prazo médio de recebimentos',
+    'Taxa de Exportação':'Taxa de Exportação'
     }
 
     # função para calcular a média dos quartis do setor de todas as dimensões, utilizada no medidor.    
@@ -299,6 +300,15 @@ if 'df_todas_dimen' and 'df_dados_setor_todas' and 'df_comparacao' in st.session
                 media_mediana += (st.session_state.df_dados_setor_todas.loc['CMVMC', str(year) + ' Mediana']+st.session_state.df_dados_setor_todas.loc['FSE', str(year) + ' Mediana']+st.session_state.df_dados_setor_todas.loc['Gastos com Pessoal', str(year) + ' Mediana']) / st.session_state.df_dados_setor_todas.loc['Volume de Negócios', str(year) + ' Mediana']
                 media_quartil_3 += (st.session_state.df_dados_setor_todas.loc['CMVMC', str(year) + ' Quartil 3']+st.session_state.df_dados_setor_todas.loc['FSE', str(year) + ' Quartil 3']+st.session_state.df_dados_setor_todas.loc['Gastos com Pessoal', str(year) + ' Quartil 3']) / st.session_state.df_dados_setor_todas.loc['Volume de Negócios', str(year) + ' Quartil 3']
                 flag_year += 1
+            elif(st.session_state.option == 'Taxa de Exportação'):
+                if(np.isnan(st.session_state.df_todas_dimen.loc['CMVMC', str(year) + ' Quartil 1']) and np.isnan(st.session_state.df_todas_dimen.loc['FSE', str(year) + ' Quartil 1']) and np.isnan(st.session_state.df_todas_dimen.loc['Gastos com Pessoal', str(year) + ' Quartil 1'])):
+                    continue
+                media_quartil_1 += (st.session_state.df_todas_dimen.loc['Vendas e serviços prestados no mercado externo', str(year) + ' Quartil 1'] / st.session_state.df_todas_dimen.loc['Volume de Negócios', str(year) + ' Quartil 1'])
+                media_mediana += (st.session_state.df_dados_setor_todas.loc['Vendas e serviços prestados no mercado externo', str(year) + ' Mediana'] / st.session_state.df_dados_setor_todas.loc['Volume de Negócios', str(year) + ' Mediana'])
+                media_quartil_3 += (st.session_state.df_todas_dimen.loc['Vendas e serviços prestados no mercado externo', str(year) + ' Quartil 3'] / st.session_state.df_todas_dimen.loc['Volume de Negócios', str(year) + ' Quartil 3'])
+                flag_year += 1
+                
+                continue
             else:
                 
                 # se não estiver preenchido dá skip a esse ano
@@ -402,41 +412,48 @@ if 'df_todas_dimen' and 'df_dados_setor_todas' and 'df_comparacao' in st.session
 
             if(~np.isnan(value)):    
                 # se tiver valor da diferença
-                col.markdown('<p style="font-weight: 1000;font-size: 20px;">'+str(round(value*100,2))+'%</p>', unsafe_allow_html=True)
+                col.markdown('<p style="font-weight: 1000;font-size: 20px;">'+str(round(value*100,2))+' p.p</p>', unsafe_allow_html=True)
             else:
                 # se não tiver valor da diferença
                 col.markdown('<p style="font-weight: 1000;font-size: 20px;text-align:center;">Sem Dados</p>', unsafe_allow_html=True)
 
         # criação do gráfico de linhas com uma trendline (na verdade é um gráfico de dispersão, mas os pontos estão unidos por linhas)
-        line_fig = px.scatter(x=range_years_linhas, y=value_diferenca.loc[year_slider_linhas[0]:year_slider_linhas[1]]*100, trendline="ols")    
-
+        line_fig = px.scatter(x=range_years_linhas, y=value_diferenca.loc[year_slider_linhas[0]:year_slider_linhas[1]]*100, trendline='ols')
 
         line_fig.update_traces(line_color=color_1, line_width=5, mode="lines") # o mode="lines" é para criar linhas entre os pontos   
+        
         line_fig.update_layout(
             xaxis=dict(
                 type="category",
                 tickmode='array',
                 tickvals=st.session_state.df_comparacao.columns[3:],
                 ticktext=[str(year)+"         " for year in st.session_state.df_comparacao.columns[3:]],
-                
             ),
-            yaxis=dict(
-                    ticksuffix=" %",
-                    tickprefix="        "
+            legend=dict(
+                orientation="h",
+                yanchor="bottom",
+                y=2,
+                xanchor="right",
+                x=1,
+                bgcolor="rgba(0,0,0,0)",  # Adjust the opacity as needed
+                bordercolor="rgba(0,0,0,0)"  # Adjust the opacity as needed
             ),
             paper_bgcolor='rgba(0,0,0,0)',
             plot_bgcolor='rgba(0,0,0,0)',
             xaxis_title=None,
             yaxis_title=None,
             height = 260
-
         )
 
         # unica forma de transformar uma trendline em uma linha pontilhada
         for  k, trace  in enumerate(line_fig.data):
-                if trace.mode is not None and trace.mode == 'lines':
-                    line_fig.data[1].update(line_dash='dot',line_width=3)
+            if trace.mode is not None and trace.mode == 'lines':
+                line_fig.data[1].update(line_dash='dot',line_width=3)
 
+        line_fig['data'][0]['showlegend']=True
+        line_fig['data'][0]['name']='Diferença empresa/setor(p.p)'
+        line_fig['data'][1]['showlegend']=True
+        line_fig['data'][1]['name']='Linha de Tendência'
     
         st.plotly_chart(line_fig,use_container_width=True, config=config)
         
@@ -464,7 +481,7 @@ if 'df_todas_dimen' and 'df_dados_setor_todas' and 'df_comparacao' in st.session
                 tickmode='array',
                 tickvals=st.session_state.df_comparacao.columns[3:],
                 ticktext=[str(year)+"         " for year in st.session_state.df_comparacao.columns[3:]],
-                ticksuffix="       "         
+                ticksuffix="       "
             ),
             yaxis=dict(
                     ticksuffix=" %",
