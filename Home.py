@@ -1,13 +1,16 @@
+import base64
+from io import BytesIO
 import numpy as np # pip install numpy
 import pandas as pd # pip install pandas
 import streamlit as st # pip install streamlit
-
+from openpyxl import load_workbook
+import streamlit.components.v1 as components
 
 # Configuração da página 
 st.set_page_config(
     page_title="Dashboard",
     page_icon="🏡",
-    layout="wide",
+    layout="wide"
 )
 
 
@@ -402,162 +405,188 @@ def normalizar_info_setor(file_path):
     
     return pivot_ordered
 
-
-
-    
-##############################MAIN############################
-
-st.markdown("### Demonstração Resultados, Balanço & Indicadores")
-uploaded_file = st.file_uploader("Selecionar ficheiro Indicadores Macros") # File uploader para o excel com as tabelas "Demonstração de Resultados" e "Balanço" preenchidas
-
-if uploaded_file is not None: 
-    # Quando for feito o upload do ficheiro são criadas as dataframes
-
-    st.session_state.df_demo_resultados = pd.read_excel(uploaded_file, sheet_name="Demonstração de Resultados", skiprows=3)
-    st.session_state.df_demo_resultados = st.session_state.df_demo_resultados.iloc[:,1:] # todas as colunas menos a primeira, que no caso é vazia
-    
-    st.session_state.df_balanco = pd.read_excel(uploaded_file, sheet_name="Balanço", skiprows=3)
-    st.session_state.df_balanco = st.session_state.df_balanco.iloc[:,1:] # todas as colunas menos a primeira, que no caso é vazia
-    
-    st.session_state.df_indicadores = create_indicadores_df() # cria a estrutura da dataframe indicadores
-     
-    st.session_state.df_demo_resultados = calc_demo_resultados_df() # recalcula os valores
-    
-    st.session_state.df_balanco = calc_balanco_df() # recalcula os valores
-    
-    st.session_state.df_indicadores = calc_indicadores_df() # preenche a datafrme indicadores com os valores das 2 tabelas acima
-     
-
-    # apresentação das dataframes
-    with st.expander("Indicadores"):
-        st.write(st.session_state.df_indicadores)
-    
-    with st.expander("Demonstração Resultados"):
+def download_save():
+    """ Download Empty Excel Sheet """
+    wb = load_workbook('Template-KPI.xlsx')
         
-        st.write(st.session_state.df_demo_resultados)
-         
-    with st.expander("Balanço"):
-        st.write(st.session_state.df_balanco)
+    virtual_workbook = BytesIO()
+    wb.save(virtual_workbook)
+    virtual_workbook.seek(0)
+    
+    b64 = base64.b64encode(virtual_workbook.getvalue()).decode()
 
+    components.html(
+        f"""
+            <html>
+                <head>
+                <title>Start Auto Download file</title>
+                <a id="fileDownload" href="data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,{b64}" download="template_kpi.xlsx">
+                <script>
+                    document.getElementById('fileDownload').click()
+                </script>
+                </head>
+            </html>
+        """,
+        height=0,
+    )
 
-st.markdown("### Dados do Setor")        
-st.markdown("##### Todas as Dimensões")   
-uploaded_file_todas_dimen = st.file_uploader("Selecionar ficheiro <Todas as dimensões>") # File uploader para o excel com as tabelas com o quadro de setor para todas as dimensões
+def main():
 
-if uploaded_file_todas_dimen is not None:
-    # Quando for feito o upload do ficheiro é criada a dataframe para todas as dimensões utilizando a função do Rafael
+    col1, col2 = st.columns(2)
 
-    st.session_state.df_todas_dimen = normalizar_info_setor(uploaded_file_todas_dimen)
-    # apresentação da dataframe
-    with st.expander("Todas as Dimensões"):
-        st.write(st.session_state.df_todas_dimen)
+    col1.markdown("### Demonstração Resultados, Balanço & Indicadores")
+    col2.button("Download Template", on_click=download_save)
+    uploaded_file = st.file_uploader("Selecionar ficheiro Indicadores Macros", accept_multiple_files=False)
+
+    if uploaded_file is not None: 
+        # Quando for feito o upload do ficheiro são criadas as dataframes
+
+        st.session_state.df_demo_resultados = pd.read_excel(uploaded_file, sheet_name="Demonstração de Resultados", skiprows=3)
+        st.session_state.df_demo_resultados = st.session_state.df_demo_resultados.iloc[:,1:] # todas as colunas menos a primeira, que no caso é vazia
         
-
-st.markdown("##### Dimensão Aplicável")
-uploaded_file_aplicavel_dimen = st.file_uploader("Selecionar ficheiro <Micro, Pequena, Média ou Grande dimensões>") # File uploader para o excel com as tabelas com o quadro de setor para a dimensão aplicável
-
-if uploaded_file_aplicavel_dimen is not None:
-    # Quando for feito o upload do ficheiro é criada a dataframe para a dimensão aplicável utilizando a função do Rafael
-
-    st.session_state.df_dimen_aplicavel = normalizar_info_setor(uploaded_file_aplicavel_dimen)
-    # apresentação da dataframe
-    with st.expander("Dimensão Aplicável"):
-        st.write(st.session_state.df_dimen_aplicavel)
-    
-    
-if uploaded_file_todas_dimen and uploaded_file_aplicavel_dimen is not None:
-    # Se ambas as dataframes, todas as dimensões e dimensão aplicável, forem criadas então é feita a criação de mais 4 dataframes:
-    # (I) dataframe anual para todas as dimensões, (II) dataframe anual para dimensão aplicável, (III) dataframe em quartis para todas as dimensões 
-    # e (IV) dataframe em quartis para a dimensão aplicável
-    
-    st.markdown("##### Dados") 
-
-    # Criação da (I) dataframe anual para todas as dimensões
-    st.session_state.df_dados_setor_todas = create_dados_setor_df() # criação da estrutura
-    
-    # percorre todos os anos
-    for year in st.session_state.df_dados_setor_todas.columns[1:]: 
-    
-        # criação de uma range com todas os numeros das rows menos as rows 17 e 23 (Taxa da VAB na CAE e Taxa de Exportação)
-        my_range = [x for x in range(len(st.session_state.df_dados_setor_todas)) if x not in [17, 23]] 
+        st.session_state.df_balanco = pd.read_excel(uploaded_file, sheet_name="Balanço", skiprows=3)
+        st.session_state.df_balanco = st.session_state.df_balanco.iloc[:,1:] # todas as colunas menos a primeira, que no caso é vazia
         
-        # percorre todas as rows menos a 17 e 23, que seram preenchidas à parte
-        for row in my_range: 
-            # preenche de acordo com a dataframe que o utilizador inseriu para todas as dimensões
-            # vai buscar o valor médio dos campos com o mesmo nome
-            st.session_state.df_dados_setor_todas.at[row,year] = st.session_state.df_todas_dimen.loc[st.session_state.df_dados_setor_todas.loc[row,'Rúbricas'], str(year)+' Valor Médio']
+        st.session_state.df_indicadores = create_indicadores_df() # cria a estrutura da dataframe indicadores
         
-        st.session_state.df_dados_setor_todas.at[17,year] = "X" # não era precisa, então acabou por não se preencher a Taxa de VAB na CAE
+        st.session_state.df_demo_resultados = calc_demo_resultados_df() # recalcula os valores
         
-        # cálculo da Taxa de Exportação
-        st.session_state.df_dados_setor_todas.at[23,year] = st.session_state.df_todas_dimen.loc['Vendas e serviços prestados no mercado externo',str(year)+' Total'] / st.session_state.df_todas_dimen.loc['Volume de Negócios',str(year)+' Total']
+        st.session_state.df_balanco = calc_balanco_df() # recalcula os valores
+        
+        st.session_state.df_indicadores = calc_indicadores_df() # preenche a datafrme indicadores com os valores das 2 tabelas acima
         
 
-    with st.expander("Dados do Setor - Todas as dimensões"):
-        st.write(st.session_state.df_dados_setor_todas)
+        # apresentação das dataframes
+        with st.expander("Indicadores"):
+            st.write(st.session_state.df_indicadores)
         
-    
-    # Criação da (II) dataframe anual para a dimensão aplicável
-    st.session_state.df_dados_setor_aplicavel = create_dados_setor_df() # criação da estrutura
+        with st.expander("Demonstração Resultados"):
+            
+            st.write(st.session_state.df_demo_resultados)
+            
+        with st.expander("Balanço"):
+            st.write(st.session_state.df_balanco)
 
-    # percorre todos os anos
-    for year in st.session_state.df_dados_setor_aplicavel.columns[1:]:
 
-        # criação de uma range com todas os numeros das rows menos as rows 17, 24 e 23 (Taxa da VAB na CAE, Taxa de Exportação e VAB em percentagem da produção)
-        my_range = [x for x in range(len(st.session_state.df_dados_setor_aplicavel)) if x not in [17, 23,24]]
+    st.markdown("### Dados do Setor")        
+    st.markdown("##### Todas as Dimensões")   
+    uploaded_file_todas_dimen = st.file_uploader("Selecionar ficheiro <Todas as dimensões>") # File uploader para o excel com as tabelas com o quadro de setor para todas as dimensões
 
-        for row in my_range: 
-            # preenche de acordo com a dataframe que o utilizador inseriu para a dimensão aplicável
-            # vai buscar o valor médio dos campos com o mesmo nome
-            st.session_state.df_dados_setor_aplicavel.at[row,year] = st.session_state.df_dimen_aplicavel.loc[st.session_state.df_dados_setor_aplicavel.loc[row,'Rúbricas'], str(year)+' Valor Médio']
-        
-        st.session_state.df_dados_setor_aplicavel.at[17,year] = "X"
-        st.session_state.df_dados_setor_aplicavel.at[23,year] = st.session_state.df_dimen_aplicavel.loc['Vendas e serviços prestados no mercado externo',str(year)+' Total'] / st.session_state.df_dimen_aplicavel.loc['Volume de Negócios',str(year)+' Total']
-        st.session_state.df_dados_setor_aplicavel.at[24,year] = st.session_state.df_dimen_aplicavel.loc['VAB em percentagem da produção',str(year)+' Valor Médio'] / 100
-    
-    with st.expander("Dados do Setor - Dimensão aplicável"):
-        st.write(st.session_state.df_dados_setor_aplicavel)
-        
-        
-    # Criação da (III) dataframe em quartis para todas as dimensões
-    st.session_state.df_quartis_todas = create_quartis_df() # criação da estrutura
-    
-    for year in st.session_state.df_quartis_todas.columns[2:]:
-       
-        for row in range(0,len(st.session_state.df_quartis_todas)): # percorre desde a primeira row até à última
-                # preenche cada row de acordo com a dataframe que o utilizador inseriu para todas as dimensões
-                # vai buscar o valor do quartil dos campos com o mesmo nome
-                st.session_state.df_quartis_todas.at[row,year] = st.session_state.df_todas_dimen.loc[st.session_state.df_quartis_todas.loc[row,'Indicadores'], str(year)+' '+st.session_state.df_quartis_todas.loc[row,'Quartil']] / 100
-    
-    with st.expander("Dados do Setor - Quartis - Todas as dimensões"):
-        st.write(st.session_state.df_quartis_todas)
-        
-              
-    # Criação da (IV) dataframe em quartis para a dimensão aplicável
-    st.session_state.df_quartis_varias = create_quartis_df() # criação da estrutura
-    
-    for year in st.session_state.df_quartis_varias.columns[2:]:
+    if uploaded_file_todas_dimen is not None:
+        # Quando for feito o upload do ficheiro é criada a dataframe para todas as dimensões utilizando a função do Rafael
 
-        for row in range(0,len(st.session_state.df_quartis_varias)): # percorre desde a primeira row até à última
-                # preenche cada row de acordo com a dataframe que o utilizador inseriu para a dimensão aplicavel
-                # vai buscar o valor do quartil dos campos com o mesmo nome
-                st.session_state.df_quartis_varias.at[row,year] = st.session_state.df_dimen_aplicavel.loc[st.session_state.df_quartis_varias.loc[row,'Indicadores'], str(year)+' '+st.session_state.df_quartis_varias.loc[row,'Quartil']] / 100
-    
-    with st.expander("Dados do Setor - Quartis - Dimensão aplicável"):
-        st.write(st.session_state.df_quartis_varias)
+        st.session_state.df_todas_dimen = normalizar_info_setor(uploaded_file_todas_dimen)
+        # apresentação da dataframe
+        with st.expander("Todas as Dimensões"):
+            st.write(st.session_state.df_todas_dimen)
+            
+
+    st.markdown("##### Dimensão Aplicável")
+    uploaded_file_aplicavel_dimen = st.file_uploader("Selecionar ficheiro <Micro, Pequena, Média ou Grande dimensões>") # File uploader para o excel com as tabelas com o quadro de setor para a dimensão aplicável
+
+    if uploaded_file_aplicavel_dimen is not None:
+        # Quando for feito o upload do ficheiro é criada a dataframe para a dimensão aplicável utilizando a função do Rafael
+
+        st.session_state.df_dimen_aplicavel = normalizar_info_setor(uploaded_file_aplicavel_dimen)
+        # apresentação da dataframe
+        with st.expander("Dimensão Aplicável"):
+            st.write(st.session_state.df_dimen_aplicavel)
         
         
-if uploaded_file_todas_dimen and uploaded_file_aplicavel_dimen and uploaded_file is not None:     
-    # Se todos os ficheiros tiverem sido uploaded então vai criar a dataframe comparação
-       
-    st.markdown('### Comparação')    
-    st.session_state.df_comparacao = create_comparacao_df() #  criação da estrutura
-    
-    fill_comparacao_df() # preenchimento da dataframe
-    
-    with st.expander("Comparação"):
-        st.data_editor(st.session_state.df_comparacao)
+    if uploaded_file_todas_dimen and uploaded_file_aplicavel_dimen is not None:
+        # Se ambas as dataframes, todas as dimensões e dimensão aplicável, forem criadas então é feita a criação de mais 4 dataframes:
+        # (I) dataframe anual para todas as dimensões, (II) dataframe anual para dimensão aplicável, (III) dataframe em quartis para todas as dimensões 
+        # e (IV) dataframe em quartis para a dimensão aplicável
+        
+        st.markdown("##### Dados") 
+
+        # Criação da (I) dataframe anual para todas as dimensões
+        st.session_state.df_dados_setor_todas = create_dados_setor_df() # criação da estrutura
+        
+        # percorre todos os anos
+        for year in st.session_state.df_dados_setor_todas.columns[1:]: 
+        
+            # criação de uma range com todas os numeros das rows menos as rows 17 e 23 (Taxa da VAB na CAE e Taxa de Exportação)
+            my_range = [x for x in range(len(st.session_state.df_dados_setor_todas)) if x not in [17, 23]] 
+            
+            # percorre todas as rows menos a 17 e 23, que seram preenchidas à parte
+            for row in my_range: 
+                # preenche de acordo com a dataframe que o utilizador inseriu para todas as dimensões
+                # vai buscar o valor médio dos campos com o mesmo nome
+                st.session_state.df_dados_setor_todas.at[row,year] = st.session_state.df_todas_dimen.loc[st.session_state.df_dados_setor_todas.loc[row,'Rúbricas'], str(year)+' Valor Médio']
+            
+            st.session_state.df_dados_setor_todas.at[17,year] = "X" # não era precisa, então acabou por não se preencher a Taxa de VAB na CAE
+            
+            # cálculo da Taxa de Exportação
+            st.session_state.df_dados_setor_todas.at[23,year] = st.session_state.df_todas_dimen.loc['Vendas e serviços prestados no mercado externo',str(year)+' Total'] / st.session_state.df_todas_dimen.loc['Volume de Negócios',str(year)+' Total']
+            
+
+        with st.expander("Dados do Setor - Todas as dimensões"):
+            st.write(st.session_state.df_dados_setor_todas)
+            
+        
+        # Criação da (II) dataframe anual para a dimensão aplicável
+        st.session_state.df_dados_setor_aplicavel = create_dados_setor_df() # criação da estrutura
+
+        # percorre todos os anos
+        for year in st.session_state.df_dados_setor_aplicavel.columns[1:]:
+
+            # criação de uma range com todas os numeros das rows menos as rows 17, 24 e 23 (Taxa da VAB na CAE, Taxa de Exportação e VAB em percentagem da produção)
+            my_range = [x for x in range(len(st.session_state.df_dados_setor_aplicavel)) if x not in [17, 23,24]]
+
+            for row in my_range: 
+                # preenche de acordo com a dataframe que o utilizador inseriu para a dimensão aplicável
+                # vai buscar o valor médio dos campos com o mesmo nome
+                st.session_state.df_dados_setor_aplicavel.at[row,year] = st.session_state.df_dimen_aplicavel.loc[st.session_state.df_dados_setor_aplicavel.loc[row,'Rúbricas'], str(year)+' Valor Médio']
+            
+            st.session_state.df_dados_setor_aplicavel.at[17,year] = "X"
+            st.session_state.df_dados_setor_aplicavel.at[23,year] = st.session_state.df_dimen_aplicavel.loc['Vendas e serviços prestados no mercado externo',str(year)+' Total'] / st.session_state.df_dimen_aplicavel.loc['Volume de Negócios',str(year)+' Total']
+            st.session_state.df_dados_setor_aplicavel.at[24,year] = st.session_state.df_dimen_aplicavel.loc['VAB em percentagem da produção',str(year)+' Valor Médio'] / 100
+        
+        with st.expander("Dados do Setor - Dimensão aplicável"):
+            st.write(st.session_state.df_dados_setor_aplicavel)
+            
+            
+        # Criação da (III) dataframe em quartis para todas as dimensões
+        st.session_state.df_quartis_todas = create_quartis_df() # criação da estrutura
+        
+        for year in st.session_state.df_quartis_todas.columns[2:]:
+        
+            for row in range(0,len(st.session_state.df_quartis_todas)): # percorre desde a primeira row até à última
+                    # preenche cada row de acordo com a dataframe que o utilizador inseriu para todas as dimensões
+                    # vai buscar o valor do quartil dos campos com o mesmo nome
+                    st.session_state.df_quartis_todas.at[row,year] = st.session_state.df_todas_dimen.loc[st.session_state.df_quartis_todas.loc[row,'Indicadores'], str(year)+' '+st.session_state.df_quartis_todas.loc[row,'Quartil']] / 100
+        
+        with st.expander("Dados do Setor - Quartis - Todas as dimensões"):
+            st.write(st.session_state.df_quartis_todas)
+            
+                
+        # Criação da (IV) dataframe em quartis para a dimensão aplicável
+        st.session_state.df_quartis_varias = create_quartis_df() # criação da estrutura
+        
+        for year in st.session_state.df_quartis_varias.columns[2:]:
+
+            for row in range(0,len(st.session_state.df_quartis_varias)): # percorre desde a primeira row até à última
+                    # preenche cada row de acordo com a dataframe que o utilizador inseriu para a dimensão aplicavel
+                    # vai buscar o valor do quartil dos campos com o mesmo nome
+                    st.session_state.df_quartis_varias.at[row,year] = st.session_state.df_dimen_aplicavel.loc[st.session_state.df_quartis_varias.loc[row,'Indicadores'], str(year)+' '+st.session_state.df_quartis_varias.loc[row,'Quartil']] / 100
+        
+        with st.expander("Dados do Setor - Quartis - Dimensão aplicável"):
+            st.write(st.session_state.df_quartis_varias)
+            
+            
+    if uploaded_file_todas_dimen and uploaded_file_aplicavel_dimen and uploaded_file is not None:     
+        # Se todos os ficheiros tiverem sido uploaded então vai criar a dataframe comparação
+        
+        st.markdown('### Comparação')    
+        st.session_state.df_comparacao = create_comparacao_df() #  criação da estrutura
+        
+        fill_comparacao_df() # preenchimento da dataframe
+        
+        with st.expander("Comparação"):
+            st.data_editor(st.session_state.df_comparacao)
         
 
-        
+if __name__ == '__main__':
+    main()
                 
