@@ -1,8 +1,6 @@
 import plotly.graph_objects as go # pip install plotly
-import requests
 import streamlit as st # pip install streamlit
 import Print as Print # ficheiro Print.py
-import streamlit.components.v1 as components
 import pandas as pd
 
 def add_notation_to_fig(fig, years, values, color, enabled):

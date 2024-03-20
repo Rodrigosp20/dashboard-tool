@@ -1,11 +1,9 @@
 import numpy as np # pip install numpy
 import plotly.express as px # pip install plotly
 import plotly.graph_objects as go # pip install plotly
-import requests
 import streamlit as st # pip install streamlit
 import statistics
 import Print as Print # ficheiro Print.py
-import streamlit.components.v1 as components
 import pandas as pd
 
 # Configuração da página

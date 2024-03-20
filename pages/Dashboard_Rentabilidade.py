@@ -1,6 +1,4 @@
 import plotly.graph_objects as go # pip install plotly
-import streamlit.components.v1 as components
-import requests
 import streamlit as st # pip install streamlit
 import Print as Print # ficheiro Print.py
 
