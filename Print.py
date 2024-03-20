@@ -1,6 +1,15 @@
 import html # pip install html
 import uuid # pip install uuid
 import streamlit as st # pip install streamlit
+import requests
+
+@st.cache_resource
+def load_unpkg(src: str) -> str:
+    return requests.get(src).text
+
+
+HTML_2_CANVAS = load_unpkg("https://unpkg.com/html2canvas@1.4.1/dist/html2canvas.js")
+JSPDF = load_unpkg("https://unpkg.com/jspdf@latest/dist/jspdf.umd.min.js")
 
 # função para injetar o código js no html através de um markdown
 def inject_js_code(source: str) -> None:
@@ -9,6 +18,8 @@ def inject_js_code(source: str) -> None:
     st.markdown(
         f"""
     <div style="display:none" id="{div_id}">
+        <script>{HTML_2_CANVAS}</script>
+        <script>{JSPDF}</script>
         <iframe src="javascript: \
             var script = document.createElement('script'); \
             script.type = 'text/javascript'; \
@@ -26,7 +37,7 @@ def inject_js_code(source: str) -> None:
 # o código é capaz de criar imagem, PDF e passar para a clipboard 
 # é necessário gerar a imagem antes de gerar o PDF ou copiar para a clipboard
 def screenshot_window() -> None:
-  
+
     source = """
 
 var button = document.getElementById('reportButton');
@@ -142,11 +153,12 @@ button.addEventListener('click', function() {
     };
     
     // primeira função a executar que irá desencadear todas as acima
-    loadScript(
+    /*loadScript(
         'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.3.2/html2canvas.min.js',
         isHtml2CanvasLoaded,
         captureAllWindows
-    );
+    );*/
+    captureAllWindows();
 
     var buttonpdf = document.getElementById('pdfButton');
 
@@ -174,11 +186,12 @@ button.addEventListener('click', function() {
         };
 
         // função que é chamada para dar load à biblioteca e que em seguida executa a função acima
-        loadScript(
+        /*loadScript(
         'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
         isjsPDFLoaded,
         convertToPDF
-        );
+        );*/
+        convertToPDF();
 
     });
 
