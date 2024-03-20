@@ -1,4 +1,6 @@
 import plotly.graph_objects as go # pip install plotly
+import streamlit.components.v1 as components
+import requests
 import streamlit as st # pip install streamlit
 import Print as Print # ficheiro Print.py
 
@@ -154,7 +156,8 @@ if 'df_comparacao' and 'df_demo_resultados' and 'df_balanco' and 'df_indicadores
         st.markdown('<p class="text-font">Qual é a eficiência com a qual a empresa gere suas despesas operacionais em relação a receita?</p>', unsafe_allow_html=True)
         
         years_graph = st.session_state.df_comparacao.columns[3:] # todos os anos da dataframe Comparação
-
+        years_graph = [year for year in years_graph if not st.session_state.df_comparacao.loc[st.session_state.df_comparacao['Entidade'] == 'Média do Setor', year].isna().any()]
+        
         # range slider para os gráficos que vai desde o primeiro até o último ano que aparece na lista years_graph 
         year_slider = st.sidebar.slider(
                 "Anos gráfico de linhas:",
@@ -217,10 +220,10 @@ if 'df_comparacao' and 'df_demo_resultados' and 'df_balanco' and 'df_indicadores
         st.markdown('<p class="text-font">Desempenho no último ano registado</p>', unsafe_allow_html=True)
         
         # valores da empresa e dos 3 quartis do setor do indicador Margem Operacional
-        gauge_empresa_margem_operacional = st.session_state.df_comparacao.loc[1,st.session_state.df_comparacao.columns[-1]]*100
-        quartil_1_margem_operacional = st.session_state.df_dimen_aplicavel.loc['Margem Operacional',str(st.session_state.df_comparacao.columns[-1])+' Quartil 1']
-        mediana_margem_operacional = st.session_state.df_dimen_aplicavel.loc['Margem Operacional',str(st.session_state.df_comparacao.columns[-1])+' Mediana']
-        quartil_3_margem_operacional = st.session_state.df_dimen_aplicavel.loc['Margem Operacional',str(st.session_state.df_comparacao.columns[-1])+' Quartil 3']
+        gauge_empresa_margem_operacional = st.session_state.df_comparacao.loc[1,range_years[-1]]*100
+        quartil_1_margem_operacional = st.session_state.df_dimen_aplicavel.loc['Margem Operacional',str(range_years[-1])+' Quartil 1']
+        mediana_margem_operacional = st.session_state.df_dimen_aplicavel.loc['Margem Operacional',str(range_years[-1])+' Mediana']
+        quartil_3_margem_operacional = st.session_state.df_dimen_aplicavel.loc['Margem Operacional',str(range_years[-1])+' Quartil 3']
           
         # função para apresentação do medidor e dos respetivos textos  
         create_gauge(gauge_empresa_margem_operacional,quartil_1_margem_operacional,mediana_margem_operacional,quartil_3_margem_operacional)
@@ -272,10 +275,10 @@ if 'df_comparacao' and 'df_demo_resultados' and 'df_balanco' and 'df_indicadores
         
         st.markdown('<p class="text-font">Desempenho no último ano registado</p>', unsafe_allow_html=True)
         
-        gauge_empresa_margem_bruta = st.session_state.df_comparacao.loc[4,st.session_state.df_comparacao.columns[-1]]*100
-        quartil_1_margem_bruta = st.session_state.df_dimen_aplicavel.loc['Margem bruta',str(st.session_state.df_comparacao.columns[-1])+' Quartil 1']
-        mediana_margem_bruta = st.session_state.df_dimen_aplicavel.loc['Margem bruta',str(st.session_state.df_comparacao.columns[-1])+' Mediana']
-        quartil_3_margem_bruta = st.session_state.df_dimen_aplicavel.loc['Margem bruta',str(st.session_state.df_comparacao.columns[-1])+' Quartil 3']
+        gauge_empresa_margem_bruta = st.session_state.df_comparacao.loc[4,range_years[-1]]*100
+        quartil_1_margem_bruta = st.session_state.df_dimen_aplicavel.loc['Margem bruta',str(range_years[-1])+' Quartil 1']
+        mediana_margem_bruta = st.session_state.df_dimen_aplicavel.loc['Margem bruta',str(range_years[-1])+' Mediana']
+        quartil_3_margem_bruta = st.session_state.df_dimen_aplicavel.loc['Margem bruta',str(range_years[-1])+' Quartil 3']
             
 
         create_gauge(gauge_empresa_margem_bruta,quartil_1_margem_bruta,mediana_margem_bruta,quartil_3_margem_bruta)
@@ -327,10 +330,10 @@ if 'df_comparacao' and 'df_demo_resultados' and 'df_balanco' and 'df_indicadores
         
         st.markdown('<p class="text-font">Desempenho no último ano registado</p>', unsafe_allow_html=True)
         
-        gauge_empresa_margem_liquida = st.session_state.df_comparacao.loc[7,st.session_state.df_comparacao.columns[-1]]*100
-        quartil_1_margem_liquida = st.session_state.df_dimen_aplicavel.loc['Margem líquida',str(st.session_state.df_comparacao.columns[-1])+' Quartil 1']
-        mediana_margem_liquida = st.session_state.df_dimen_aplicavel.loc['Margem líquida',str(st.session_state.df_comparacao.columns[-1])+' Mediana']
-        quartil_3_margem_liquida = st.session_state.df_dimen_aplicavel.loc['Margem líquida',str(st.session_state.df_comparacao.columns[-1])+' Quartil 3']
+        gauge_empresa_margem_liquida = st.session_state.df_comparacao.loc[7,range_years[-1]]*100
+        quartil_1_margem_liquida = st.session_state.df_dimen_aplicavel.loc['Margem líquida',str(range_years[-1])+' Quartil 1']
+        mediana_margem_liquida = st.session_state.df_dimen_aplicavel.loc['Margem líquida',str(range_years[-1])+' Mediana']
+        quartil_3_margem_liquida = st.session_state.df_dimen_aplicavel.loc['Margem líquida',str(range_years[-1])+' Quartil 3']
           
         
         create_gauge(gauge_empresa_margem_liquida,quartil_1_margem_liquida,mediana_margem_liquida,quartil_3_margem_liquida)
@@ -340,9 +343,9 @@ if 'df_comparacao' and 'df_demo_resultados' and 'df_balanco' and 'df_indicadores
         st.markdown('<p class="sub_header-font">Nivel de Valor Acrescentado</p>', unsafe_allow_html=True)
         st.markdown('<p class="text-font">Quanto valor adicional a empresa cria em relação aos custos de produção?</p>', unsafe_allow_html=True)
         
-        valor_acresc_values_graph = st.session_state.df_comparacao.loc[10, st.session_state.df_comparacao.columns[3:]] 
-        media_valor_acresc_todos_values_graph = st.session_state.df_comparacao.loc[11, st.session_state.df_comparacao.columns[3:]]
-        media_valor_acresc_aplicavel_values_graph = st.session_state.df_dados_setor_aplicavel.loc[24, st.session_state.df_comparacao.columns[3:]]
+        valor_acresc_values_graph = st.session_state.df_comparacao.loc[10, range_years] 
+        media_valor_acresc_todos_values_graph = st.session_state.df_comparacao.loc[11, range_years]
+        media_valor_acresc_aplicavel_values_graph = st.session_state.df_dados_setor_aplicavel.loc[24, range_years]
         
 
         valor_acresc = go.Figure()
@@ -382,10 +385,10 @@ if 'df_comparacao' and 'df_demo_resultados' and 'df_balanco' and 'df_indicadores
         
         st.markdown('<p class="text-font">Desempenho no último ano registado</p>', unsafe_allow_html=True)
         
-        gauge_empresa_valor_acresc = st.session_state.df_comparacao.loc[10,st.session_state.df_comparacao.columns[-1]]*100
-        quartil_1_valor_acresc = st.session_state.df_dimen_aplicavel.loc['VAB em percentagem da produção', str(st.session_state.df_comparacao.columns[-1])+' Quartil 1']
-        mediana_valor_acresc = st.session_state.df_dimen_aplicavel.loc['VAB em percentagem da produção', str(st.session_state.df_comparacao.columns[-1])+' Mediana']
-        quartil_3_valor_acresc = st.session_state.df_dimen_aplicavel.loc['VAB em percentagem da produção', str(st.session_state.df_comparacao.columns[-1])+' Quartil 3']
+        gauge_empresa_valor_acresc = st.session_state.df_comparacao.loc[10,range_years[-1]]*100
+        quartil_1_valor_acresc = st.session_state.df_dimen_aplicavel.loc['VAB em percentagem da produção', str(range_years[-1])+' Quartil 1']
+        mediana_valor_acresc = st.session_state.df_dimen_aplicavel.loc['VAB em percentagem da produção', str(range_years[-1])+' Mediana']
+        quartil_3_valor_acresc = st.session_state.df_dimen_aplicavel.loc['VAB em percentagem da produção', str(range_years[-1])+' Quartil 3']
        
         
         create_gauge(gauge_empresa_valor_acresc,quartil_1_valor_acresc,mediana_valor_acresc,quartil_3_valor_acresc)
@@ -447,10 +450,10 @@ if 'df_comparacao' and 'df_demo_resultados' and 'df_balanco' and 'df_indicadores
         
         st.markdown('<p class="text-font">Desempenho no último ano registado</p>', unsafe_allow_html=True)
         
-        gauge_empresa_rent_ativo = st.session_state.df_comparacao.loc[13,st.session_state.df_comparacao.columns[-1]]*100
-        quartil_1_rent_ativo = st.session_state.df_dimen_aplicavel.loc['Rentabilidade do ativo',str(st.session_state.df_comparacao.columns[-1])+' Quartil 1']
-        mediana_rent_ativo = st.session_state.df_dimen_aplicavel.loc['Rentabilidade do ativo',str(st.session_state.df_comparacao.columns[-1])+' Mediana']
-        quartil_3_rent_ativo = st.session_state.df_dimen_aplicavel.loc['Rentabilidade do ativo',str(st.session_state.df_comparacao.columns[-1])+' Quartil 3']
+        gauge_empresa_rent_ativo = st.session_state.df_comparacao.loc[13,range_years[-1]]*100
+        quartil_1_rent_ativo = st.session_state.df_dimen_aplicavel.loc['Rentabilidade do ativo',str(range_years[-1])+' Quartil 1']
+        mediana_rent_ativo = st.session_state.df_dimen_aplicavel.loc['Rentabilidade do ativo',str(range_years[-1])+' Mediana']
+        quartil_3_rent_ativo = st.session_state.df_dimen_aplicavel.loc['Rentabilidade do ativo',str(range_years[-1])+' Quartil 3']
         
         create_gauge(gauge_empresa_rent_ativo,quartil_1_rent_ativo,mediana_rent_ativo,quartil_3_rent_ativo)
     
@@ -461,6 +464,6 @@ if 'df_comparacao' and 'df_demo_resultados' and 'df_balanco' and 'df_indicadores
     st.write("")
     st.markdown('<p style="padding:20px 0 0 0; text-align: right;" class="text-font">Fonte: Banco de Portugal</p>', unsafe_allow_html=True)
 
-
+    
 else:
     st.write('Carregar ficheiros primeiro')

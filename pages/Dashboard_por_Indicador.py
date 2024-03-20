@@ -1,10 +1,12 @@
 import numpy as np # pip install numpy
 import plotly.express as px # pip install plotly
 import plotly.graph_objects as go # pip install plotly
+import requests
 import streamlit as st # pip install streamlit
 import statistics
 import Print as Print # ficheiro Print.py
-
+import streamlit.components.v1 as components
+import pandas as pd
 
 # Configuração da página
 st.set_page_config(
@@ -12,6 +14,18 @@ st.set_page_config(
     page_icon="📈",
     layout="wide",
 )
+
+def add_notation_to_fig(fig, years, values, color, enabled):
+    offset = max(values)*10
+    if enabled:
+        for i, val in enumerate(values): 
+                fig.add_annotation(
+                    x=years[i],
+                    y=val*100 + offset,
+                    text=f"{int(val*100)}%" if pd.notna(val) else "N.A",
+                    font=dict(color="#011138", size=12),
+                    showarrow=False
+                )
 
 if 'df_todas_dimen' and 'df_dados_setor_todas' and 'df_comparacao' in st.session_state:
 
@@ -28,6 +42,14 @@ if 'df_todas_dimen' and 'df_dados_setor_todas' and 'df_comparacao' in st.session
     # CSS
     st.markdown("""
     <style>
+    
+    div[data-testid='stAppViewBlockContainer'] {
+        padding-left: 50px;
+        padding-right: 50px;
+        max-width: 1286px;
+        max-height: 1620px;
+    }
+                
     .title-font {
         font-size:40px !important;
         text-align: center;
@@ -199,6 +221,8 @@ if 'df_todas_dimen' and 'df_dados_setor_todas' and 'df_comparacao' in st.session
         flag_year = 0 # flag para contar quantos anos têm o valor do respetivo indicador preenchido. Utilizado para fazer a média.
         # Alguns anos de certos indicadores não estão preenchidos nas tabelas dos quadros do setor.
         for year in years:
+            if str(year) + ' Quartil 1' not in st.session_state.df_todas_dimen.columns:
+                continue
             
             if(st.session_state.option=='Liquidez imediata'):
 
@@ -331,6 +355,8 @@ if 'df_todas_dimen' and 'df_dados_setor_todas' and 'df_comparacao' in st.session
         
     
     with col2_text:
+        #st.title(titulo_principal)
+        #st.subheader(st.session_state.option)
         st.markdown(f'<p class="title-font">{titulo_principal}</p>', unsafe_allow_html=True)       
         st.markdown('<p class="sub_header-font">'+st.session_state.option+'</p>', unsafe_allow_html=True)
         st.divider()
@@ -344,6 +370,7 @@ if 'df_todas_dimen' and 'df_dados_setor_todas' and 'df_comparacao' in st.session
         st.markdown(f'<p class="sub_header-font">{titulo_gauge}</p>', unsafe_allow_html=True) 
         
         # média da empresa
+        
         media_gauge_empresa = statistics.mean(st.session_state.df_comparacao.loc[st.session_state.df_comparacao.loc[st.session_state.df_comparacao['Indicador'] == st.session_state.option].index[0], range_years_gauge])*100
         
         # média do setor de todas as dimensões
@@ -463,7 +490,13 @@ if 'df_todas_dimen' and 'df_dados_setor_todas' and 'df_comparacao' in st.session
         range_years_barras = list(range(year_slider_barras[0],year_slider_barras[1]+1,1)) 
 
         # toggle box para mudar entre um gráfico de barras ou linhas
-        toggle_barras_linhas = st.sidebar.toggle('Barras/Linhas')
+        if not (toggle_barras_linhas := st.sidebar.toggle('Barras/Linhas')):
+
+            annotation = st.sidebar.toggle('Mostrar valores')
+
+        else:
+            annotation = False
+        
 
 
         bar_fig = go.Figure()
@@ -476,12 +509,14 @@ if 'df_todas_dimen' and 'df_dados_setor_todas' and 'df_comparacao' in st.session
             bar_fig.add_trace(go.Scatter(x=range_years_barras, y=value_media_setor.loc[year_slider_barras[0]:year_slider_barras[1]]*100, name="Média do Setor", line={'width': 3}, marker=dict(color=color_3)))
         else:
             bar_fig.add_trace(go.Bar(x=range_years_barras, y=value_media_setor.loc[year_slider_barras[0]:year_slider_barras[1]]*100, name="Média do Setor", marker=dict(color=color_3)))
+        
         bar_fig.update_layout(
             xaxis=dict(
                 tickmode='array',
                 tickvals=st.session_state.df_comparacao.columns[3:],
                 ticktext=[str(year)+"         " for year in st.session_state.df_comparacao.columns[3:]],
-                ticksuffix="       "
+                ticksuffix="       ",
+                tickfont=dict(color="#011138")
             ),
             yaxis=dict(
                     ticksuffix=" %",
@@ -489,14 +524,17 @@ if 'df_todas_dimen' and 'df_dados_setor_todas' and 'df_comparacao' in st.session
                     zeroline=True, 
                     zerolinewidth=1, 
                     zerolinecolor="black",
+                    tickfont=dict(color="#011138")
             ),
             paper_bgcolor='rgba(0,0,0,0)',
             plot_bgcolor='rgba(0,0,0,0)',
             title = titulo_barras,
             height = 320
-
         )
         
+        add_notation_to_fig(bar_fig, [year - 0.18 for year in range_years_barras], value_empresa.loc[year_slider_barras[0]:year_slider_barras[1]], color_2, annotation)
+        add_notation_to_fig(bar_fig, [year + 0.18 for year in range_years_barras], value_media_setor.loc[year_slider_barras[0]:year_slider_barras[1]], color_3, annotation)
+
         st.plotly_chart(bar_fig, use_container_width=True, config=config)
 
     with col2_bot:
@@ -556,7 +594,6 @@ if 'df_todas_dimen' and 'df_dados_setor_todas' and 'df_comparacao' in st.session
     Print.buttons()
     
     st.markdown('<p style="text-align: right;" class="text-font">Fonte: Banco de Portugal</p>', unsafe_allow_html=True)
-
     
 else:
     st.write('Carregar ficheiros primeiro')

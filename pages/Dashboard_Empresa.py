@@ -3,6 +3,7 @@ import requests
 import streamlit as st # pip install streamlit
 import Print as Print # ficheiro Print.py
 import streamlit.components.v1 as components
+import pandas as pd
 
 def add_notation_to_fig(fig, years, values, color, enabled):
     offset = max(values)*10
@@ -11,8 +12,8 @@ def add_notation_to_fig(fig, years, values, color, enabled):
             fig.add_annotation(
                 x=years[i],
                 y=val*100 + offset,
-                text=f"{int(val*100)} %",
-                font=dict(color=color, size=12),
+                text=f"{int(val*100)}%" if pd.notna(val) else "N.A",
+                font=dict(color="#011138", size=12),
                 showarrow=False
             )
 
@@ -26,6 +27,17 @@ st.set_page_config(
 # CSS
 st.markdown("""
     <style>
+    div[data-testid='stAppViewBlockContainer'] {
+        padding-left: 50px;
+        padding-right: 50px;
+        max-width: 1286px;
+        max-height: 1620px;
+    }
+
+    div[data-testid='stVerticalBlockBorderWrapper'] {
+        width: 100%;
+    }
+            
     div[data-testid='stSidebarNav'] ul{
         max-height:none;
     }
@@ -84,15 +96,19 @@ st.markdown("""
     div[data-testid="stHorizontalBlock"] div[data-testid="column"] div[data-testid="stHorizontalBlock"] div[data-testid="element-container"] {
         background-color: rgb(241, 241, 241);
         border-radius: 25px;
+        width:295px;
+        height: 300px;
     }
             
     div[data-testid="stHorizontalBlock"] div[data-testid="column"]:nth-child(2) div[data-testid="element-container"]{
         background-color: rgb(241, 241, 241);
         border-radius: 25px;
+        width:585px;
     }
               
     div[data-testid="stImage"]{
         margin: auto;
+        margin-top:67px;
     }
             
     div[class="stPlotlyChart js-plotly-plot"]{
@@ -132,7 +148,7 @@ if 'df_comparacao' in st.session_state: # se a dataframe Comparação estiver cr
     st.markdown("## Dashboard Empresa")
     # na coluna da esquerda ficaram todos os gráficos mais pequenos e o logotipo da STREAM, e na coluna da direita ficará o gráfico maior
     # colunas serão do mesmo tamanho por isso o [1, 1]
-    left_col, right_col = st.columns([1, 1]) 
+    left_col, right_col = st.columns([0.52, 0.48]) 
 
     # lista dos anos que estão na dataframe Comparação
     # será utilizado na iniciação do range slider
@@ -142,7 +158,7 @@ if 'df_comparacao' in st.session_state: # se a dataframe Comparação estiver cr
         
         column_1, column_2 = st.columns(2) # coluna de esquerda é dividida em mais 2 colunas
         
-        st.image('images/logo1.png', width=400) # logotipo STREAM
+        st.image('images/logo1.png') # logotipo STREAM
             
         with column_1:
             ### MARGEM OPERACIONAL
@@ -177,22 +193,27 @@ if 'df_comparacao' in st.session_state: # se a dataframe Comparação estiver cr
                 xaxis=dict( # alteração do eixo X para utilizar apenas os valores que lhe são dados no range_years, caso contrário ele começa a utilizar casas decimais entre os valores do X
                     tickmode='array',
                     tickvals=range_years,
-                    ticktext=[str(year) for year in range_years]
+                    ticktext=[str(year) for year in range_years],
+                    tickfont=dict(color="#011138")
                 ),
                 yaxis=dict( 
-                    ticksuffix=" %", # adiciona sufixo de % no eixo do Y
-                    tickprefix="      ", # adiciona espaços em branco atrás dos valores de Y. Fix a um bug do plotly que corta alguns valores na hora de fazer o download da imagem do gráfico.
+                    ticksuffix="%", # adiciona sufixo de % no eixo do Y
                     zeroline=True, # adiciona linha no eixo do X
                     zerolinewidth=1, 
                     zerolinecolor=color,
+                    tickfont=dict(color="#011138")
                 ),
-
                 paper_bgcolor='rgba(0,0,0,0)', # transparência do background na hora do download da imagem
                 plot_bgcolor='rgba(0,0,0,0)', # transparência do background na hora do download da imagem
-                title = "Margem Operacional", # titulo que aparece em cima do gráfico
-                title_x=0.2, # alterar a posição do titulo para ficar centrado com o gráfico
-                height= 300, # altura do gráfico
-                width=250, # largura do gráfico
+                title={
+                    'text': "Margem Operacional",
+                    'x':0.5,
+                    'y':0.85,
+                    'xanchor': 'center',
+                    'yanchor': 'top'
+                },
+                height= 300,
+                width=227,
                 showlegend=False # não mostrar a legenda do gráfico
             )
 
@@ -213,21 +234,27 @@ if 'df_comparacao' in st.session_state: # se a dataframe Comparação estiver cr
                 xaxis=dict(
                     tickmode='array',
                     tickvals=range_years,
-                    ticktext=[str(year) for year in range_years]
+                    ticktext=[str(year) for year in range_years],
+                    tickfont=dict(color="#011138")
                 ),
                 yaxis=dict(
                     ticksuffix=" %",
-                    tickprefix="      ",
                     zeroline=True, 
                     zerolinewidth=1, 
                     zerolinecolor=color,
+                    tickfont=dict(color="#011138")
                 ),
                 paper_bgcolor='rgba(0,0,0,0)',
                 plot_bgcolor='rgba(0,0,0,0)',
-                title = "Rentabilidade do<br>Capital Próprio",
-                title_x=0.25,
+                title={
+                    'text': "Rentabilidade do<br>Capital Próprio",
+                    'x':0.5,
+                    'y':0.85,
+                    'xanchor': 'center',
+                    'yanchor': 'top'
+                },
                 height= 300,
-                width=250,
+                width=227,
                 showlegend=False
             )
 
@@ -247,21 +274,27 @@ if 'df_comparacao' in st.session_state: # se a dataframe Comparação estiver cr
                 xaxis=dict(
                     tickmode='array',
                     tickvals=range_years,
-                    ticktext=[str(year) for year in range_years]
+                    ticktext=[str(year) for year in range_years],
+                    tickfont=dict(color="#011138")
                 ),
                 yaxis=dict(
                     ticksuffix=" %",
-                    tickprefix="      ",
                     zeroline=True, 
                     zerolinewidth=1, 
                     zerolinecolor=color,
+                    tickfont=dict(color="#011138")
                 ),
                 paper_bgcolor='rgba(0,0,0,0)',
                 plot_bgcolor='rgba(0,0,0,0)',
-                title = "Liquidez Geral",
-                title_x=0.2,
+                title={
+                    'text': "Liquidez Geral",
+                    'x':0.5,
+                    'y':0.85,
+                    'xanchor': 'center',
+                    'yanchor': 'top'
+                },
                 height= 300,
-                width=250,
+                width=227,
                 showlegend=False
             )
 
@@ -282,21 +315,27 @@ if 'df_comparacao' in st.session_state: # se a dataframe Comparação estiver cr
                 xaxis=dict(
                     tickmode='array',
                     tickvals=range_years,
-                    ticktext=[str(year) for year in range_years]
+                    ticktext=[str(year) for year in range_years],
+                    tickfont=dict(color="#011138")
                 ),
                 yaxis=dict(
                     ticksuffix=" %",
-                    tickprefix="      ",
                     zeroline=True, 
                     zerolinewidth=1, 
                     zerolinecolor=color,
+                    tickfont=dict(color="#011138")
                 ),
                 paper_bgcolor='rgba(0,0,0,0)',
                 plot_bgcolor='rgba(0,0,0,0)',
-                title = "Liquidez Reduzida",
-                title_x=0.2,
+                title={
+                    'text': "Liquidez Reduzida",
+                    'x':0.5,
+                    'y':0.85,
+                    'xanchor': 'center',
+                    'yanchor': 'top'
+                },
                 height= 300,
-                width=250,
+                width=227,
                 showlegend=False
             )
 
@@ -316,21 +355,27 @@ if 'df_comparacao' in st.session_state: # se a dataframe Comparação estiver cr
                 xaxis=dict(
                     tickmode='array',
                     tickvals=range_years,
-                    ticktext=[str(year) for year in range_years]
+                    ticktext=[str(year) for year in range_years],
+                    tickfont=dict(color="#011138")
                 ),
                 yaxis=dict(
                     ticksuffix=" %",
-                    tickprefix="      ",
                     zeroline=True, 
                     zerolinewidth=1, 
                     zerolinecolor=color,
+                    tickfont=dict(color="#011138")
                 ),
                 paper_bgcolor='rgba(0,0,0,0)',
                 plot_bgcolor='rgba(0,0,0,0)',
-                title = "Autonomia Financeira",
-                title_x=0.2,
+                title={
+                    'text': "Autonomia Financeira",
+                    'x':0.5,
+                    'y':0.85,
+                    'xanchor': 'center',
+                    'yanchor': 'top'
+                },
                 height= 300,
-                width=250,
+                width=227,
                 showlegend=False
             )
 
@@ -350,21 +395,27 @@ if 'df_comparacao' in st.session_state: # se a dataframe Comparação estiver cr
                 xaxis=dict(
                     tickmode='array',
                     tickvals=range_years,
-                    ticktext=[str(year) for year in range_years]
+                    ticktext=[str(year) for year in range_years],
+                    tickfont=dict(color="#011138")
                 ),
                 yaxis=dict(
                     ticksuffix=" %",
-                    tickprefix="      ",
                     zeroline=True, 
                     zerolinewidth=1, 
                     zerolinecolor=color,
+                    tickfont=dict(color="#011138"),
                 ),
                 paper_bgcolor='rgba(0,0,0,0)',
                 plot_bgcolor='rgba(0,0,0,0)',
-                title = "Alavancagem Financeira",
-                title_x=0.2,
+                title={
+                    'text': "Alavancagem Financeira",
+                    'x':0.5,
+                    'y':0.85,
+                    'xanchor': 'center',
+                    'yanchor': 'top'
+                },
                 height= 300,
-                width=250,
+                width=227,
                 showlegend=False
             )
             st.plotly_chart(alavancagem_financeira, config=config)
@@ -385,12 +436,21 @@ if 'df_comparacao' in st.session_state: # se a dataframe Comparação estiver cr
         textposition='outside', base=100, orientation='h', marker=dict(color=color)))
         
         indice.update_layout(
-            title = "Comparação do desempenho de indicadores <br> chave da empresa face ao setor no ano "+str(year_slider[1]),
-            title_x=0.2,
+            title={
+                'text': "Comparação do desempenho de indicadores <br> chave da empresa face ao setor no ano "+str(year_slider[1]),
+                'x':0.5,
+                'y':0.97,
+                'xanchor': 'center',
+                'yanchor': 'top'
+            },
             width=2000,
             height=1200,
             xaxis=dict(
-                side="top" # troca a posição do eixo do X para ficar no topo
+                side="top", # troca a posição do eixo do X para ficar no topo
+                tickfont=dict(color="#011138")
+            ),
+            yaxis=dict(
+                tickfont=dict(color="#011138")
             ),
             paper_bgcolor='rgba(0,0,0,0)',
             plot_bgcolor='rgba(0,0,0,0)'
@@ -401,63 +461,6 @@ if 'df_comparacao' in st.session_state: # se a dataframe Comparação estiver cr
     
     # botões para fazer o download da imagem, PDF e copiar para a clipboard a dashboard 
     Print.buttons()
-
-    @st.cache_resource
-    def load_unpkg(src: str) -> str:
-        return requests.get(src).text
-
-
-    HTML_2_CANVAS = load_unpkg("https://unpkg.com/html2canvas@1.4.1/dist/html2canvas.js")
-    JSPDF = load_unpkg("https://unpkg.com/jspdf@latest/dist/jspdf.umd.min.js")
-
-    if st.sidebar.button("DOWNLOAD PDF"):
-        components.html(
-                        f"""
-            <script>{HTML_2_CANVAS}</script>
-            <script>{JSPDF}</script>
-            <script>
-            const html2canvas = window.html2canvas
-            const {{ jsPDF }} = window.jspdf
-
-            const streamlitDoc = window.parent.document;
-            const stApp = streamlitDoc.querySelector('.main > .block-container');
-
-            const buttons = Array.from(streamlitDoc.querySelectorAll('.stButton > button'));
-            const pdfButton = buttons.find(el => el.innerText === 'DOWNLOAD PDF');
-            const docHeight = stApp.scrollHeight;
-            const docWidth = stApp.scrollWidth;
-
-            let topLeftMargin = 15;
-            let pdfWidth = docHeight + (topLeftMargin * 2);
-            let pdfHeight = (pdfWidth * 1.5) + (topLeftMargin * 2);
-            let canvasImageWidth = docWidth;
-            let canvasImageHeight = docHeight;
-
-            let totalPDFPages = Math.ceil(docHeight / pdfHeight)-1;
-
-            pdfButton.innerText = 'Creating PDF...';
-
-            html2canvas(stApp, {{ allowTaint: true }}).then(function (canvas) {{
-
-                canvas.getContext('2d');
-                let imgData = canvas.toDataURL("image/jpeg", 1.0);
-
-                let pdf = new jsPDF('p', 'px', [pdfWidth, pdfHeight]);
-                pdf.addImage(imgData, 'JPG', topLeftMargin, topLeftMargin, canvasImageWidth, canvasImageHeight);
-
-                for (var i = 1; i <= totalPDFPages; i++) {{
-                    pdf.addPage();
-                    pdf.addImage(imgData, 'JPG', topLeftMargin, -(pdfHeight * i) + (topLeftMargin*4), canvasImageWidth, canvasImageHeight);
-                }}
-
-                pdf.save('test.pdf');
-                pdfButton.innerText = 'DOWNLOAD PDF';
-            }})
-            </script>
-            """,
-                        height=0,
-                        width=0,
-                    )
 
     st.markdown('<p style="text-align: right;" class="text-font">Fonte: Banco de Portugal</p>', unsafe_allow_html=True)
         

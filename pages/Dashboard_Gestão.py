@@ -96,10 +96,10 @@ if 'df_comparacao' and 'df_demo_resultados' and 'df_balanco' and 'df_indicadores
     max_value=st.session_state.df_indicadores.columns[-1]
 
     # caixa numérica para o ano de inicio do projeto
-    ano_inicio = st.sidebar.number_input("Ano de inicio do projeto:", value=2017, min_value=min_value, max_value=max_value)
+    ano_inicio = st.sidebar.number_input("Ano de inicio do projeto:", value=st.session_state.df_indicadores.columns[2], min_value=min_value, max_value=max_value)
 
     # caixa numérica para o ano de término do projeto
-    ano_fim = st.sidebar.number_input("Ano de fim do projeto:", value=2022, min_value=min_value, max_value=max_value)
+    ano_fim = st.sidebar.number_input("Ano de fim do projeto:", value=st.session_state.df_indicadores.columns[2], min_value=min_value, max_value=max_value)
     
     # caixa numérica para a despesa elegível do projeto
     despesa_elegivel = st.sidebar.number_input("Despesa elegível do projeto:",value=None)

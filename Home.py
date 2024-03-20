@@ -293,38 +293,38 @@ def create_comparacao_df():
 def fill_comparacao_df():
     rows_empresa= [1,4,7,10,13,17,20,23,26,29,32,35,38,41,45,48,51,55,58,61,64,68,71]
     
-    
-    
     for year in st.session_state.df_comparacao.columns[3:]:
-        st.session_state.df_comparacao.at[2,year] = st.session_state.df_dados_setor_todas.loc[1,year] / st.session_state.df_dados_setor_todas.loc[0,year]
-        st.session_state.df_comparacao.at[5,year] = (st.session_state.df_dados_setor_todas.loc[0,year] - st.session_state.df_dados_setor_todas.loc[2,year]) / st.session_state.df_dados_setor_todas.loc[0,year]
-        st.session_state.df_comparacao.at[8,year] = st.session_state.df_dados_setor_todas.loc[5,year] / st.session_state.df_dados_setor_todas.loc[0,year]
-        st.session_state.df_comparacao.at[11,year] = st.session_state.df_dados_setor_todas.loc[24,year] / 100
-        st.session_state.df_comparacao.at[14,year] = st.session_state.df_dados_setor_todas.loc[5,year] / st.session_state.df_dados_setor_todas.loc[6,year]
-        st.session_state.df_comparacao.at[18,year] = st.session_state.df_dados_setor_todas.loc[0,year] / st.session_state.df_dados_setor_todas.loc[6,year]
-        st.session_state.df_comparacao.at[21,year] = st.session_state.df_dados_setor_todas.loc[3,year] / st.session_state.df_dados_setor_todas.loc[0,year]
-        st.session_state.df_comparacao.at[24,year] = st.session_state.df_dados_setor_todas.loc[4,year] / st.session_state.df_dados_setor_todas.loc[0,year]       
-        st.session_state.df_comparacao.at[27,year] = st.session_state.df_dados_setor_todas.loc[2,year] / st.session_state.df_dados_setor_todas.loc[0,year]
-        st.session_state.df_comparacao.at[30,year] = (st.session_state.df_dados_setor_todas.loc[2,year]+st.session_state.df_dados_setor_todas.loc[3,year]+st.session_state.df_dados_setor_todas.loc[4,year]) / st.session_state.df_dados_setor_todas.loc[0,year]
-        st.session_state.df_comparacao.at[33,year] = st.session_state.df_dados_setor_todas.loc[18,year]
-        st.session_state.df_comparacao.at[36,year] = st.session_state.df_dados_setor_todas.loc[19,year]
-        st.session_state.df_comparacao.at[39,year] = st.session_state.df_dados_setor_todas.loc[22,year] / st.session_state.df_dados_setor_todas.loc[21,year]
-        st.session_state.df_comparacao.at[42,year] = st.session_state.df_dados_setor_todas.loc[23,year] 
-        st.session_state.df_comparacao.at[46,year] = st.session_state.df_dados_setor_todas.loc[9,year] / st.session_state.df_dados_setor_todas.loc[10,year]
-        st.session_state.df_comparacao.at[49,year] = (st.session_state.df_dados_setor_todas.loc[9,year]-st.session_state.df_dados_setor_todas.loc[13,year]) / st.session_state.df_dados_setor_todas.loc[10,year]
-        st.session_state.df_comparacao.at[52,year] = st.session_state.df_dados_setor_todas.loc[14,year] / st.session_state.df_dados_setor_todas.loc[10,year]
-        st.session_state.df_comparacao.at[56,year] = st.session_state.df_dados_setor_todas.loc[8,year] / st.session_state.df_dados_setor_todas.loc[6,year]
-        st.session_state.df_comparacao.at[59,year] = st.session_state.df_dados_setor_todas.loc[7,year] / st.session_state.df_dados_setor_todas.loc[6,year]  
-        st.session_state.df_comparacao.at[62,year] = st.session_state.df_dados_setor_todas.loc[6,year] / st.session_state.df_dados_setor_todas.loc[7,year] 
-        st.session_state.df_comparacao.at[65,year] = (st.session_state.df_dados_setor_todas.loc[8,year]+st.session_state.df_dados_setor_todas.loc[15,year]) / st.session_state.df_dados_setor_todas.loc[15,year]
-        st.session_state.df_comparacao.at[69,year] = (st.session_state.df_dados_setor_todas.loc[20,year]-st.session_state.df_dados_setor_todas.loc[16,year]) / st.session_state.df_dados_setor_todas.loc[6,year]
-        st.session_state.df_comparacao.at[72,year] = st.session_state.df_dados_setor_todas.loc[5,year] / st.session_state.df_dados_setor_todas.loc[8,year]
-  
-        for row in rows_empresa:
-            
-            st.session_state.df_comparacao.at[row, year] = st.session_state.df_indicadores[st.session_state.df_indicadores['Indicador'] == st.session_state.df_comparacao.at[row, 'Indicador']][year].iloc[0]
-            st.session_state.df_comparacao.at[row+2, year] = st.session_state.df_comparacao.at[row,year] / st.session_state.df_comparacao.at[row+1,year] * 100
-            
+        if year in st.session_state.df_dados_setor_todas.columns:
+            st.session_state.df_comparacao.at[2,year] = st.session_state.df_dados_setor_todas.loc[1,year] / st.session_state.df_dados_setor_todas.loc[0,year]
+            st.session_state.df_comparacao.at[5,year] = (st.session_state.df_dados_setor_todas.loc[0,year] - st.session_state.df_dados_setor_todas.loc[2,year]) / st.session_state.df_dados_setor_todas.loc[0,year]
+            st.session_state.df_comparacao.at[8,year] = st.session_state.df_dados_setor_todas.loc[5,year] / st.session_state.df_dados_setor_todas.loc[0,year]
+            st.session_state.df_comparacao.at[11,year] = st.session_state.df_dados_setor_todas.loc[24,year] / 100
+            st.session_state.df_comparacao.at[14,year] = st.session_state.df_dados_setor_todas.loc[5,year] / st.session_state.df_dados_setor_todas.loc[6,year]
+            st.session_state.df_comparacao.at[18,year] = st.session_state.df_dados_setor_todas.loc[0,year] / st.session_state.df_dados_setor_todas.loc[6,year]
+            st.session_state.df_comparacao.at[21,year] = st.session_state.df_dados_setor_todas.loc[3,year] / st.session_state.df_dados_setor_todas.loc[0,year]
+            st.session_state.df_comparacao.at[24,year] = st.session_state.df_dados_setor_todas.loc[4,year] / st.session_state.df_dados_setor_todas.loc[0,year]       
+            st.session_state.df_comparacao.at[27,year] = st.session_state.df_dados_setor_todas.loc[2,year] / st.session_state.df_dados_setor_todas.loc[0,year]
+            st.session_state.df_comparacao.at[30,year] = (st.session_state.df_dados_setor_todas.loc[2,year]+st.session_state.df_dados_setor_todas.loc[3,year]+st.session_state.df_dados_setor_todas.loc[4,year]) / st.session_state.df_dados_setor_todas.loc[0,year]
+            st.session_state.df_comparacao.at[33,year] = st.session_state.df_dados_setor_todas.loc[18,year]
+            st.session_state.df_comparacao.at[36,year] = st.session_state.df_dados_setor_todas.loc[19,year]
+            st.session_state.df_comparacao.at[39,year] = st.session_state.df_dados_setor_todas.loc[22,year] / st.session_state.df_dados_setor_todas.loc[21,year]
+            st.session_state.df_comparacao.at[42,year] = st.session_state.df_dados_setor_todas.loc[23,year] 
+            st.session_state.df_comparacao.at[46,year] = st.session_state.df_dados_setor_todas.loc[9,year] / st.session_state.df_dados_setor_todas.loc[10,year]
+            st.session_state.df_comparacao.at[49,year] = (st.session_state.df_dados_setor_todas.loc[9,year]-st.session_state.df_dados_setor_todas.loc[13,year]) / st.session_state.df_dados_setor_todas.loc[10,year]
+            st.session_state.df_comparacao.at[52,year] = st.session_state.df_dados_setor_todas.loc[14,year] / st.session_state.df_dados_setor_todas.loc[10,year]
+            st.session_state.df_comparacao.at[56,year] = st.session_state.df_dados_setor_todas.loc[8,year] / st.session_state.df_dados_setor_todas.loc[6,year]
+            st.session_state.df_comparacao.at[59,year] = st.session_state.df_dados_setor_todas.loc[7,year] / st.session_state.df_dados_setor_todas.loc[6,year]  
+            st.session_state.df_comparacao.at[62,year] = st.session_state.df_dados_setor_todas.loc[6,year] / st.session_state.df_dados_setor_todas.loc[7,year] 
+            st.session_state.df_comparacao.at[65,year] = (st.session_state.df_dados_setor_todas.loc[8,year]+st.session_state.df_dados_setor_todas.loc[15,year]) / st.session_state.df_dados_setor_todas.loc[15,year]
+            st.session_state.df_comparacao.at[69,year] = (st.session_state.df_dados_setor_todas.loc[20,year]-st.session_state.df_dados_setor_todas.loc[16,year]) / st.session_state.df_dados_setor_todas.loc[6,year]
+            st.session_state.df_comparacao.at[72,year] = st.session_state.df_dados_setor_todas.loc[5,year] / st.session_state.df_dados_setor_todas.loc[8,year]
+    
+            for row in rows_empresa:
+                
+                st.session_state.df_comparacao.at[row, year] = st.session_state.df_indicadores[st.session_state.df_indicadores['Indicador'] == st.session_state.df_comparacao.at[row, 'Indicador']][year].iloc[0]
+                st.session_state.df_comparacao.at[row+2, year] = st.session_state.df_comparacao.at[row,year] / st.session_state.df_comparacao.at[row+1,year] * 100
+        else:
+            st.session_state.df_comparacao.loc[st.session_state.df_comparacao['Entidade'] == 'Média do Setor', year] = None
         
     return st.session_state.df_comparacao
  
