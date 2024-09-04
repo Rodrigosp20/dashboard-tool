@@ -75,11 +75,13 @@ def total_capital_proprio_mais_passivo(col):
     return round(st.session_state.df_balanco.loc[61:61,col].sum()+st.session_state.df_balanco.loc[41:41,col].sum() ,2)
 
 def calc_balanco_df():
-    for year in st.session_state.df_balanco.columns[1:]:
+    years = st.session_state.df_balanco.columns[st.session_state.df_balanco.columns.astype(str).str.isnumeric()]
+    
+    for year in years:
         st.session_state.df_balanco.at[0,year] = ativo_nao_corrent_calc(year)
         st.session_state.df_balanco.at[12,year] = ativo_corrent_calc(year)
         st.session_state.df_balanco.at[26,year] = total_ativo_calc(year)
-        st.session_state.df_balanco.at[41,year] = total_capital_proprio(year)
+        st.session_state.df_balanco.at[41,year] = total_capital_proprio(year) 
         st.session_state.df_balanco.at[43,year] = passivo_nao_corrente(year)
         st.session_state.df_balanco.at[49,year] = passivo_corrente(year)
         st.session_state.df_balanco.at[61,year] = total_passivo(year)
